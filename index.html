@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#002366"/>
+<title>Branch GPS Locator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --p:#002366;--pl:#003399;--pp:#e8edf8;
+  --a:#f0a500;--al:#fff8e6;
+  --r:#d32f2f;--rl:#ffebee;
+  --g:#1b7a3e;--gl:#e8f5ee;
+  --t:#1a1a1a;--tm:#6b7280;
+  --bd:#dde3f0;--sf:#fff;--bg:#f0f3fa;
+  --sh:0 2px 12px rgba(0,35,102,.10);
+  --rad:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+
+.hdr{width:100%;background:linear-gradient(135deg,#001233,#002366);color:#fff;padding:16px 18px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 16px rgba(0,35,102,.35);position:sticky;top:0;z-index:100;}
+.hdr-left h1{font-size:16px;font-weight:700;}
+.hdr-left p{font-size:11px;opacity:.7;margin-top:1px;}
+.hdr-btn{background:linear-gradient(135deg,#f0a500,#d4880a);border:none;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(240,165,0,.4);}
+.hdr-btn:hover{filter:brightness(1.05);}
+
+.card{background:var(--sf);border-radius:var(--rad);box-shadow:var(--sh);padding:22px 18px;width:100%;max-width:480px;margin:18px 14px 30px;}
+
+.steps{display:flex;align-items:center;gap:5px;margin-bottom:20px;}
+.sdot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--bd);color:var(--tm);flex-shrink:0;transition:all .3s;}
+.sdot.active{background:linear-gradient(135deg,#002366,#003399);color:#fff;}
+.sdot.done{background:#25D366;color:#fff;}
+.slbl{font-size:10.5px;color:var(--tm);font-weight:500;}
+.slbl.active{color:var(--p);font-weight:700;}
+.ssep{flex:1;height:1.5px;background:var(--bd);}
+
+.notice{background:#fff8e6;border:1.5px solid var(--a);border-radius:var(--rs);padding:13px 14px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start;}
+.notice-icon{font-size:22px;flex-shrink:0;}
+.notice-text{font-size:12.5px;color:#5a3e00;line-height:1.6;}
+.notice-text strong{display:block;font-size:13.5px;font-weight:700;margin-bottom:3px;color:#3d2900;}
+
+.lbl{font-size:10.5px;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+
+.srch-wrap{position:relative;margin-bottom:9px;}
+.srch-wrap input{width:100%;padding:12px 14px 12px 40px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--t);outline:none;transition:border-color .2s;background:var(--bg);}
+.srch-wrap input:focus{border-color:var(--p);background:#fff;}
+.srch-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:16px;}
+
+#dd{width:100%;max-height:220px;overflow-y:auto;border:1.5px solid var(--bd);border-radius:var(--rs);background:#fff;display:none;margin-bottom:12px;box-shadow:var(--sh);}
+#dd.open{display:block;}
+.bitem{padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;transition:background .15s;}
+.bitem:last-child{border-bottom:none;}
+.bitem:hover{background:var(--pp);}
+.bname{font-size:13.5px;font-weight:500;}
+.bcode{font-family:'DM Mono',monospace;font-size:11px;color:var(--p);background:var(--pp);padding:2px 7px;border-radius:4px;font-weight:600;}
+
+.selbx{display:none;background:var(--pp);border:1.5px solid var(--p);border-radius:var(--rs);padding:13px 15px;margin-bottom:18px;align-items:center;gap:10px;}
+.selbx.show{display:flex;}
+.sel-info{flex:1;}
+.sel-info .sn{font-size:14px;font-weight:700;color:var(--p);}
+.sel-info .sc{font-family:'DM Mono',monospace;font-size:12px;color:var(--tm);margin-top:2px;}
+.chg{font-size:12px;color:var(--p);font-weight:700;cursor:pointer;text-decoration:underline;white-space:nowrap;}
+
+.inp{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--t);outline:none;background:var(--bg);transition:border-color .2s;margin-bottom:16px;}
+.inp:focus{border-color:var(--p);background:#fff;}
+
+.chkbox{background:#fff8e6;border:1.5px solid var(--a);border-radius:var(--rs);padding:15px;margin-bottom:18px;display:none;}
+.chkbox.show{display:block;}
+.chk-title{font-size:12.5px;font-weight:700;color:#7c5700;margin-bottom:11px;}
+.chk-row{display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:7px 0;border-bottom:1px solid #f0dc9a;}
+.chk-row:last-child{border-bottom:none;}
+.chk-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--p);cursor:pointer;flex-shrink:0;margin-top:1px;}
+.chk-label{font-size:13px;color:#5a3e00;line-height:1.5;font-weight:500;}
+.chk-label strong{color:var(--r);}
+
+.div{height:1px;background:var(--bd);margin:18px 0;}
+
+.btn{width:100%;padding:15px;border:none;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-p{background:linear-gradient(135deg,#002366,#003399);color:#fff;box-shadow:0 4px 16px rgba(0,35,102,.3);}
+.btn-p:hover:not(:disabled){background:linear-gradient(135deg,#003399,#0044bb);transform:translateY(-1px);}
+.btn-p:disabled{background:#9ca3af;box-shadow:none;cursor:not-allowed;opacity:.6;}
+.btn-submit{background:linear-gradient(135deg,#1b7a3e,#25a85a);color:#fff;box-shadow:0 4px 14px rgba(27,122,62,.35);}
+.btn-submit:hover:not(:disabled){background:linear-gradient(135deg,#25a85a,#2ec96b);transform:translateY(-1px);}
+.btn-submit:disabled{background:#9ca3af;box-shadow:none;cursor:not-allowed;opacity:.6;}
+
+.gstat{display:none;border-radius:var(--rs);padding:14px 15px;margin:14px 0;font-size:13px;}
+.gstat.loading{background:var(--al);border:1.5px solid var(--a);color:#7c5700;display:flex;align-items:center;gap:10px;}
+.gstat.success{background:var(--pp);border:1.5px solid var(--p);color:#002366;display:block;}
+.gstat.error{background:var(--rl);border:1.5px solid var(--r);color:var(--r);display:flex;align-items:center;gap:10px;}
+
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.citem{background:#fff;border-radius:var(--rs);padding:10px 12px;border:1px solid var(--bd);}
+.citem .cl{font-size:9.5px;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;}
+.citem .cv{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:#002366;margin-top:3px;}
+.abadge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#002366,#003399);color:#fff;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:600;margin-top:10px;}
+.mlink{display:inline-flex;align-items:center;gap:5px;color:var(--p);font-size:12.5px;font-weight:600;text-decoration:none;margin-top:9px;}
+.mlink:hover{text-decoration:underline;}
+
+.submit-sec{display:none;margin-top:18px;}
+.submit-sec.show{display:block;}
+
+.submitted-box{background:var(--gl);border:1.5px solid var(--g);border-radius:var(--rs);padding:18px;text-align:center;display:none;margin-top:16px;}
+.submitted-box.show{display:block;}
+.submitted-box .big{font-size:36px;margin-bottom:8px;}
+.submitted-box h3{font-size:16px;font-weight:700;color:var(--g);margin-bottom:4px;}
+.submitted-box p{font-size:12.5px;color:#4a7a5a;line-height:1.5;}
+
+.sload{display:none;border-radius:var(--rs);padding:13px 15px;margin-top:12px;background:var(--al);border:1.5px solid var(--a);color:#7c5700;font-size:13px;align-items:center;gap:10px;}
+.sload.show{display:flex;}
+
+.empty-state{text-align:center;padding:40px 20px;display:none;}
+.empty-state.show{display:block;}
+.empty-state .big{font-size:48px;margin-bottom:14px;}
+.empty-state h3{font-size:17px;font-weight:700;color:var(--g);margin-bottom:6px;}
+.empty-state p{font-size:13px;color:var(--tm);line-height:1.6;}
+
+/* REPORT PANEL */
+.rpanel{display:none;width:100%;max-width:900px;margin:0 14px 30px;}
+.rpanel.show{display:block;}
+.rpanel-card{background:#fff;border-radius:var(--rad);box-shadow:var(--sh);padding:22px 18px;margin-bottom:16px;}
+.rpanel-title{font-size:17px;font-weight:700;color:var(--p);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.back-btn{font-size:12.5px;color:var(--p);font-weight:600;cursor:pointer;text-decoration:underline;}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.stat-box{background:var(--bg);border-radius:var(--rs);padding:14px 12px;text-align:center;border:1.5px solid var(--bd);}
+.stat-box.green{border-color:#25D366;background:#e8f5ee;}
+.stat-box.red{border-color:var(--r);background:var(--rl);}
+.stat-box.blue{border-color:var(--p);background:var(--pp);}
+.stat-num{font-size:26px;font-weight:700;line-height:1;}
+.stat-num.green{color:#1b7a3e;}
+.stat-num.red{color:var(--r);}
+.stat-num.blue{color:var(--p);}
+.stat-lbl{font-size:10.5px;color:var(--tm);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.tab{padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:#fff;color:var(--tm);transition:all .2s;}
+.tab.active{background:var(--p);color:#fff;border-color:var(--p);}
+
+.btable{width:100%;border-collapse:collapse;font-size:13px;}
+.btable th{background:var(--pp);color:var(--p);font-weight:700;padding:10px 12px;text-align:left;border-bottom:2px solid var(--bd);font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+.btable td{padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:middle;}
+.btable tr:last-child td{border-bottom:none;}
+.btable tr:hover td{background:var(--bg);}
+.status-done{background:#e8f5ee;color:#1b7a3e;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.status-pend{background:var(--rl);color:var(--r);padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.coord-cell{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--p);}
+.map-ico{color:var(--p);text-decoration:none;font-size:16px;}
+
+.export-row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.exp-btn{flex:1;min-width:120px;padding:12px;border:none;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;}
+.exp-excel{background:linear-gradient(135deg,#1b7a3e,#25a85a);color:#fff;box-shadow:0 3px 10px rgba(27,122,62,.3);}
+.exp-excel:hover{transform:translateY(-1px);}
+.exp-pdf{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;box-shadow:0 3px 10px rgba(192,57,43,.3);}
+.exp-pdf:hover{transform:translateY(-1px);}
+.exp-img{background:linear-gradient(135deg,#6a1b9a,#9c27b0);color:#fff;box-shadow:0 3px 10px rgba(106,27,154,.3);}
+.exp-img:hover{transform:translateY(-1px);}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+.osheet{background:#fff;border-radius:var(--rad);padding:28px 24px;width:100%;max-width:360px;text-align:center;}
+.osheet h2{font-size:18px;font-weight:700;color:var(--p);margin-bottom:6px;}
+.osheet p{font-size:13px;color:var(--tm);margin-bottom:20px;}
+.pin-input{width:100%;padding:14px;text-align:center;font-size:22px;font-weight:700;letter-spacing:8px;border:2px solid var(--bd);border-radius:var(--rs);font-family:'DM Mono',monospace;outline:none;margin-bottom:14px;}
+.pin-input:focus{border-color:var(--p);}
+.pin-err{color:var(--r);font-size:12.5px;margin-bottom:12px;display:none;}
+.btn-pin{width:100%;padding:13px;border:none;border-radius:var(--rs);background:linear-gradient(135deg,#002366,#003399);color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:18px;height:18px;border:2.5px solid var(--a);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.footer{text-align:center;color:var(--tm);font-size:11px;padding:14px 18px 32px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <h1>GPS Locator</h1>
+    <p>Branch Location Capture</p>
+  </div>
+  <button class="hdr-btn" onclick="openAdmin()">🔐 Admin</button>
+</div>
+
+<!-- SUBMIT CARD -->
+<div class="card" id="submitCard">
+
+  <div class="steps">
+    <div class="sdot active" id="s1d">1</div><div class="slbl active" id="s1l">Branch</div>
+    <div class="ssep"></div>
+    <div class="sdot" id="s2d">2</div><div class="slbl" id="s2l">Staff No.</div>
+    <div class="ssep"></div>
+    <div class="sdot" id="s3d">3</div><div class="slbl" id="s3l">GPS</div>
+    <div class="ssep"></div>
+    <div class="sdot" id="s4d">4</div><div class="slbl" id="s4l">Submit</div>
+  </div>
+
+  <div class="notice">
+    <div class="notice-icon">⚠️</div>
+    <div class="notice-text">
+      <strong>Important — Please Read</strong>
+      You must be <u>physically present inside your branch</u> before capturing GPS location.
+    </div>
+  </div>
+
+  <!-- BRANCH LIST (pending only) -->
+  <div id="branchSection">
+    <div class="lbl">🏦 Step 1 — Select Your Branch</div>
+    <div class="srch-wrap">
+      <span class="srch-icon">🔍</span>
+      <input type="text" id="bsearch" placeholder="Type branch name or DPCD code…" autocomplete="off"/>
+    </div>
+    <div id="dd"></div>
+
+    <div class="selbx" id="selbx">
+      <div class="sel-info">
+        <div class="sn" id="sbn">—</div>
+        <div class="sc" id="sbc">—</div>
+      </div>
+      <span class="chg" id="chgBtn" onclick="clearBranch()">Change</span>
+    </div>
+
+    <!-- STAFF NUMBER -->
+    <div class="lbl" id="staffLbl" style="display:none;margin-top:4px;">👤 Step 2 — Enter Your Staff Number</div>
+    <input class="inp" type="text" id="staffNo" style="display:none;" placeholder="e.g. 894257" maxlength="10" oninput="onStaffInput()"/>
+
+    <div class="chkbox" id="chkbox">
+      <div class="chk-title">📋 Confirm Before Proceeding</div>
+      <label class="chk-row">
+        <input type="checkbox" id="c1" onchange="checkAll()"/>
+        <span class="chk-label">I am currently <strong>physically present inside</strong> the branch premises.</span>
+      </label>
+      <label class="chk-row">
+        <input type="checkbox" id="c2" onchange="checkAll()"/>
+        <span class="chk-label">The branch and staff number above are <strong>correct</strong>.</span>
+      </label>
+      <label class="chk-row">
+        <input type="checkbox" id="c3" onchange="checkAll()"/>
+        <span class="chk-label">I understand that <strong>submitting false location</strong> is a misconduct.</span>
+      </label>
+    </div>
+
+    <div class="div"></div>
+
+    <button class="btn btn-p" id="gpsBtn" onclick="getGPS()" disabled>📡 Capture My GPS Location</button>
+
+    <div class="gstat loading" id="gload"><div class="spinner"></div><span>Fetching GPS… Stay inside the branch</span></div>
+    <div class="gstat error" id="gerr"><span>⚠️</span><span id="gerrmsg"></span></div>
+    <div class="gstat success" id="gsucc">
+      <strong>✅ Location Captured</strong>
+      <div class="cgrid">
+        <div class="citem"><div class="cl">Latitude</div><div class="cv" id="dlat">—</div></div>
+        <div class="citem"><div class="cl">Longitude</div><div class="cv" id="dlng">—</div></div>
+      </div>
+      <div class="abadge" id="dacc">📡 Accuracy: —</div><br/>
+      <a class="mlink" id="mlink" target="_blank" href="#">🗺 View on Google Maps</a>
+    </div>
+
+    <div class="submit-sec" id="submitSec">
+      <div class="div"></div>
+      <button class="btn btn-submit" id="submitBtn" onclick="submitData()">✅ Submit Location</button>
+      <div class="sload" id="sload"><div class="spinner"></div><span>Submitting to database…</span></div>
+    </div>
+
+    <div class="submitted-box" id="submittedBox">
+      <div class="big">🎉</div>
+      <h3>Location Submitted!</h3>
+      <p id="submittedMsg">Your branch GPS coordinates have been saved successfully.</p>
+    </div>
+  </div>
+
+  <!-- EMPTY STATE: all branches submitted -->
+  <div class="empty-state" id="emptyState">
+    <div class="big">✅</div>
+    <h3>All Branches Submitted!</h3>
+    <p>Every branch has already submitted its GPS location.<br/>No pending branches remain.</p>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div id="initLoading" style="text-align:center;padding:40px 20px;color:var(--tm);font-size:13px;">
+    <div class="spinner" style="margin:0 auto 12px;"></div>
+    Loading branch list…
+  </div>
+
+</div>
+
+<!-- ADMIN / REPORT PANEL -->
+<div class="rpanel" id="rpanel">
+  <div class="rpanel-card">
+    <div class="rpanel-title">
+      <span>📊 Branch GPS Report</span>
+      <span class="back-btn" onclick="backToSubmit()">← Back to Submit</span>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box green"><div class="stat-num green" id="statDone">0</div><div class="stat-lbl">Submitted</div></div>
+      <div class="stat-box red"><div class="stat-num red" id="statPend">0</div><div class="stat-lbl">Pending</div></div>
+      <div class="stat-box blue"><div class="stat-num blue" id="statTotal">0</div><div class="stat-lbl">Total</div></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabAll"   onclick="switchTab('all')">All Branches</div>
+      <div class="tab"        id="tabDone"  onclick="switchTab('done')">✅ Submitted</div>
+      <div class="tab"        id="tabPend"  onclick="switchTab('pend')">⏳ Pending</div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="btable" id="rptTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Branch Name</th>
+            <th>DPCD</th>
+            <th>Staff No.</th>
+            <th>Status</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Accuracy</th>
+            <th>Date &amp; Time</th>
+            <th>Map</th>
+          </tr>
+        </thead>
+        <tbody id="rptBody"></tbody>
+      </table>
+    </div>
+
+    <div id="rptLoading" style="text-align:center;padding:20px;color:var(--tm);font-size:13px;">Loading report…</div>
+
+    <div class="export-row">
+      <button class="exp-btn exp-excel" onclick="exportExcel()">📥 Export Excel</button>
+      <button class="exp-btn exp-pdf"   onclick="exportPDF()">📄 Export PDF</button>
+      <button class="exp-btn exp-img"   onclick="exportImage()">🖼️ Export Image</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN OVERLAY -->
+<div class="overlay" id="pinOverlay">
+  <div class="osheet">
+    <h2>🔐 Admin Access</h2>
+    <p>Enter PIN to view reports</p>
+    <input type="password" class="pin-input" id="pinInput" maxlength="10" placeholder="••••" onkeydown="if(event.key==='Enter')checkPin()"/>
+    <div class="pin-err" id="pinErr">Incorrect PIN. Try again.</div>
+    <button class="btn-pin" onclick="checkPin()">Unlock Report</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="footer">Pawan Singh</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG — Replace with your Supabase project details
+// ═══════════════════════════════════════════════════════════════
+const SB_URL  = "https://ffbyevyaghwhudeunadc.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmYnlldnlhZ2h3aHVkZXVuYWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Nzc5NDgsImV4cCI6MjA5NzI1Mzk0OH0.LeRflHXlrkYKvJBwVdWh19FRMR19Slhtdj1Sd7wGj1s";
+
+// ═══════════════════════════════════════════════════════════════
+// BRANCH DATA (from BRANCH_LOCATOR_DATA.xlsx — 54 branches)
+// ═══════════════════════════════════════════════════════════════
+const ALL_BRANCHES = [{"dpcd":"10667","name":"100 FEET ROAD KALYAN NAGAR"},{"dpcd":"2891","name":"BAGALAGUNTE"},{"dpcd":"476","name":"BAGALUR"},{"dpcd":"7618","name":"BAGALUR CURRENCY CHEST"},{"dpcd":"10459","name":"BANASWADI"},{"dpcd":"2973","name":"BHUVANESWARINAGAR"},{"dpcd":"5597","name":"CHIKKABANAVARA"},{"dpcd":"407","name":"COLES ROAD FRAZER TOWN"},{"dpcd":"432","name":"D'COSTA LAYOUT"},{"dpcd":"6363","name":"DASARAHALLI"},{"dpcd":"419","name":"DEVARAJEEVANAHALLI"},{"dpcd":"10444","name":"GANGAMMA CIRCLE"},{"dpcd":"10458","name":"GANGANAGAR (GG HALLI)"},{"dpcd":"2737","name":"GKVK"},{"dpcd":"690","name":"GOKULA"},{"dpcd":"425","name":"HEBBAL"},{"dpcd":"3043","name":"HENNUR ROAD"},{"dpcd":"3404","name":"HESARAGHATTA"},{"dpcd":"10473","name":"I A F STATION HEBBAL"},{"dpcd":"683","name":"INDIAN INSTITUTE OF SCIENCE"},{"dpcd":"3195","name":"JALAHALLI"},{"dpcd":"10469","name":"JALAVAYU VIHAR"},{"dpcd":"10423","name":"KADUGONDANAHALLI (K G HALLI)"},{"dpcd":"5910","name":"KALKERE"},{"dpcd":"2456","name":"KALYANANAGAR"},{"dpcd":"10679","name":"KAREGUDDADAHALLI"},{"dpcd":"10668","name":"KASTURI NAGAR"},{"dpcd":"10690","name":"KODIGEHALLI"},{"dpcd":"10420","name":"KRISHNARAJAPURAM-II"},{"dpcd":"10445","name":"LINGARAJAPURAM"},{"dpcd":"2834","name":"LOTTEGOLLAHALLI (MARUTHI NAGAR)"},{"dpcd":"4787","name":"MARUTHINAGAR"},{"dpcd":"7088","name":"MSME SULABH BENGALURU NORTH"},{"dpcd":"888","name":"R M V EXTN"},{"dpcd":"5036","name":"RAH YELAHANKA"},{"dpcd":"4788","name":"RAJANUKUNTE"},{"dpcd":"10489","name":"RAMAMURTHYNAGAR"},{"dpcd":"9282","name":"RETAIL ASSETS HUB K R PURAM"},{"dpcd":"10662","name":"RMV II STAGE"},{"dpcd":"2760","name":"SAHAKARNAGAR"},{"dpcd":"2699","name":"SANJAYNAGAR"},{"dpcd":"10410","name":"SAUNDERS ROAD FRAZERTOWN"},{"dpcd":"10471","name":"SHANKARNAGAR APMC YARD"},{"dpcd":"5370","name":"SHIVAKOTE"},{"dpcd":"10694","name":"SONNAPPANAHALLI"},{"dpcd":"10698","name":"SULTANAPALYA RT NAGAR"},{"dpcd":"10686","name":"THANISANDRA"},{"dpcd":"3846","name":"TINDLU"},{"dpcd":"2615","name":"VIDYARANYAPURA"},{"dpcd":"10498","name":"VIRGONAGAR GARDEN CITY"},{"dpcd":"1702","name":"VIVEKANANDA NAGAR"},{"dpcd":"10491","name":"YELAHANKA DAIRY CROSS"},{"dpcd":"7781","name":"YELAHANKA OLD TOWN"},{"dpcd":"1812","name":"YELAHANKA SATELLITE TOWN"}];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let PENDING_BRANCHES = [];   // branches not yet submitted
+let submittedDpcds = new Set();
+let selBranch = null, coords = null;
+let reportData = [], activeTab = 'all';
+let reportUnlocked = false;
+
+// ═══════════════════════════════════════════════════════════════
+// INIT — Load submitted list, compute pending
+// ═══════════════════════════════════════════════════════════════
+async function init() {
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/branch_gps?select=dpcd`, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
+    });
+    const rows = await res.json();
+    submittedDpcds = new Set(rows.map(r => r.dpcd));
+  } catch(e) {
+    console.error('Init fetch failed', e);
+  }
+
+  PENDING_BRANCHES = ALL_BRANCHES.filter(b => !submittedDpcds.has(b.dpcd));
+  document.getElementById('initLoading').style.display = 'none';
+
+  if (PENDING_BRANCHES.length === 0) {
+    document.getElementById('branchSection').style.display = 'none';
+    document.getElementById('emptyState').classList.add('show');
+  } else {
+    document.getElementById('branchSection').style.display = 'block';
+    // Do not auto-render the full list — wait for user to type
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BRANCH SEARCH
+// ═══════════════════════════════════════════════════════════════
+const bsearch = document.getElementById('bsearch');
+const dd = document.getElementById('dd');
+
+bsearch.addEventListener('input', () => {
+  const q = bsearch.value.trim().toLowerCase();
+  if (!q) { dd.classList.remove('open'); dd.innerHTML = ''; return; }
+  renderDD(PENDING_BRANCHES.filter(b => b.name.toLowerCase().includes(q) || b.dpcd.includes(q)));
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.srch-wrap') && !e.target.closest('#dd')) dd.classList.remove('open');
+});
+
+function renderDD(list) {
+  dd.innerHTML = '';
+  if (!list.length) {
+    dd.innerHTML = '<div class="bitem" style="color:var(--tm);cursor:default">No branch found</div>';
+  } else {
+    list.forEach(b => {
+      const el = document.createElement('div');
+      el.className = 'bitem';
+      el.innerHTML = `<span class="bname">${b.name}</span><span class="bcode">${b.dpcd}</span>`;
+      el.onclick = () => pickBranch(b);
+      dd.appendChild(el);
+    });
+  }
+  dd.classList.add('open');
+}
+
+function pickBranch(b) {
+  selBranch = b;
+  dd.classList.remove('open');
+  bsearch.value = '';
+  document.getElementById('sbn').textContent = b.name;
+  document.getElementById('sbc').textContent = 'DPCD: ' + b.dpcd;
+  document.getElementById('selbx').classList.add('show');
+  document.getElementById('chgBtn').style.display = 'inline';
+  document.getElementById('staffLbl').style.display = 'block';
+  document.getElementById('staffNo').style.display = 'block';
+  setStep(1);
+}
+
+function clearBranch() {
+  selBranch = null; coords = null;
+  document.getElementById('selbx').classList.remove('show');
+  document.getElementById('staffLbl').style.display = 'none';
+  document.getElementById('staffNo').style.display = 'none';
+  document.getElementById('staffNo').value = '';
+  document.getElementById('chkbox').classList.remove('show');
+  document.getElementById('gpsBtn').disabled = true;
+  document.getElementById('submitSec').classList.remove('show');
+  document.getElementById('submittedBox').classList.remove('show');
+  hide('gload'); hide('gsucc'); hide('gerr'); hide('sload');
+  resetChk(); setStep(0);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STAFF NUMBER INPUT
+// ═══════════════════════════════════════════════════════════════
+function onStaffInput() {
+  const val = document.getElementById('staffNo').value.trim();
+  if (val.length >= 5) {
+    document.getElementById('chkbox').classList.add('show');
+    setStep(2);
+  } else {
+    document.getElementById('chkbox').classList.remove('show');
+    resetChk();
+    if (selBranch) setStep(1);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHECKBOXES
+// ═══════════════════════════════════════════════════════════════
+function resetChk() {
+  ['c1','c2','c3'].forEach(id => document.getElementById(id).checked = false);
+  document.getElementById('gpsBtn').disabled = true;
+}
+function checkAll() {
+  const all = ['c1','c2','c3'].every(id => document.getElementById(id).checked);
+  document.getElementById('gpsBtn').disabled = !all;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GPS
+// ═══════════════════════════════════════════════════════════════
+function getGPS() {
+  const staffNo = document.getElementById('staffNo').value.trim();
+  if (!selBranch) { toast('Select branch first'); return; }
+  if (staffNo.length < 5) { toast('Enter your staff number'); return; }
+  if (!navigator.geolocation) { showErr('GPS not supported. Use Chrome.'); return; }
+
+  show('gload','flex'); hide('gsucc'); hide('gerr');
+  document.getElementById('submitSec').classList.remove('show');
+  document.getElementById('submittedBox').classList.remove('show');
+  document.getElementById('gpsBtn').disabled = true;
+  navigator.geolocation.getCurrentPosition(onOk, onFail, {enableHighAccuracy:true,timeout:25000,maximumAge:0});
+}
+
+function onOk(pos) {
+  hide('gload');
+  const {latitude:lat, longitude:lng, accuracy:acc} = pos.coords;
+  coords = {lat, lng, acc, ts: new Date().toISOString()};
+  document.getElementById('dlat').textContent = lat.toFixed(6);
+  document.getElementById('dlng').textContent = lng.toFixed(6);
+  document.getElementById('dacc').innerHTML = '📡 Accuracy: ±' + Math.round(acc) + 'm ' + (acc<=100?'✅':'⚠️ Low');
+  document.getElementById('mlink').href = `https://maps.google.com/?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+  show('gsucc','block');
+  document.getElementById('submitSec').classList.add('show');
+  document.getElementById('gpsBtn').disabled = false;
+  document.getElementById('chgBtn').style.display = 'none';
+  document.getElementById('staffNo').disabled = true;
+  setStep(3);
+}
+
+function onFail(err) {
+  hide('gload');
+  document.getElementById('gpsBtn').disabled = false;
+  const msgs = {1:'Location access DENIED. Enable in browser settings.',2:'Location unavailable. Try near a window.',3:'Request timed out. Retry.'};
+  showErr(msgs[err.code]||'GPS error. Retry.');
+}
+function showErr(msg) { document.getElementById('gerrmsg').textContent = msg; show('gerr','flex'); }
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT TO SUPABASE
+// ═══════════════════════════════════════════════════════════════
+async function submitData() {
+  const staffNo = document.getElementById('staffNo').value.trim();
+  if (!coords || !selBranch) { toast('Select branch and capture GPS first'); return; }
+  if (staffNo.length < 5) { toast('Enter your staff number'); return; }
+
+  document.getElementById('submitBtn').disabled = true;
+  show('sload','flex');
+
+  const payload = {
+    branch_name : selBranch.name,
+    dpcd        : selBranch.dpcd,
+    staff_no    : staffNo,
+    latitude    : coords.lat,
+    longitude   : coords.lng,
+    accuracy    : Math.round(coords.acc),
+    captured_at : coords.ts,
+    maps_link   : `https://maps.google.com/?q=${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`
+  };
+
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/branch_gps`, {
+      method: 'POST',
+      headers: {
+        'Content-Type'  : 'application/json',
+        'apikey'        : SB_ANON,
+        'Authorization' : `Bearer ${SB_ANON}`,
+        'Prefer'        : 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    hide('sload');
+
+    if (res.ok || res.status === 201) {
+      document.getElementById('submitSec').classList.remove('show');
+      hide('gsucc');
+      const box = document.getElementById('submittedBox');
+      document.getElementById('submittedMsg').textContent =
+        `${selBranch.name} (DPCD: ${selBranch.dpcd}) coordinates saved successfully. This branch is now removed from the pending list.`;
+      box.classList.add('show');
+      setStep(4);
+      toast('✅ Submitted successfully!');
+
+      // Remove from pending list locally
+      submittedDpcds.add(selBranch.dpcd);
+      PENDING_BRANCHES = PENDING_BRANCHES.filter(b => b.dpcd !== selBranch.dpcd);
+    } else {
+      const err = await res.text();
+      document.getElementById('submitBtn').disabled = false;
+      toast('❌ Submit failed. Check Supabase config.');
+      console.error('Supabase error:', res.status, err);
+    }
+  } catch(e) {
+    hide('sload');
+    document.getElementById('submitBtn').disabled = false;
+    toast('❌ Network error. Check connection.');
+    console.error(e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN — PIN GATE (SHA-256, verified against Supabase)
+// ═══════════════════════════════════════════════════════════════
+function openAdmin() {
+  if (reportUnlocked) { showReportPanel(); return; }
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinErr').style.display = 'none';
+  document.getElementById('pinOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('pinInput').focus(), 300);
+}
+
+async function hashPin(pin) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPin() {
+  const pin = document.getElementById('pinInput').value.trim();
+  if (!pin) return;
+
+  const btn = document.querySelector('.btn-pin');
+  btn.textContent = 'Verifying…'; btn.disabled = true;
+
+  try {
+    const hashed = await hashPin(pin);
+    const res = await fetch(`${SB_URL}/rest/v1/admin_config?key=eq.admin_pin&select=value`, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
+    });
+    const rows = await res.json();
+
+    if (rows.length && rows[0].value === hashed) {
+      reportUnlocked = true;
+      document.getElementById('pinOverlay').classList.remove('open');
+      showReportPanel();
+    } else {
+      document.getElementById('pinErr').style.display = 'block';
+      document.getElementById('pinInput').value = '';
+      document.getElementById('pinInput').focus();
+    }
+  } catch(e) {
+    document.getElementById('pinErr').textContent = 'Network error. Check connection.';
+    document.getElementById('pinErr').style.display = 'block';
+    console.error(e);
+  } finally {
+    btn.textContent = 'Unlock Report'; btn.disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REPORT PANEL
+// ═══════════════════════════════════════════════════════════════
+function showReportPanel() {
+  document.getElementById('submitCard').style.display = 'none';
+  document.getElementById('rpanel').classList.add('show');
+  loadReport();
+}
+
+function backToSubmit() {
+  document.getElementById('rpanel').classList.remove('show');
+  document.getElementById('submitCard').style.display = 'block';
+  init(); // refresh pending list
+}
+
+async function loadReport() {
+  document.getElementById('rptLoading').style.display = 'block';
+  document.getElementById('rptBody').innerHTML = '';
+
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/branch_gps?select=branch_name,dpcd,staff_no,latitude,longitude,accuracy,captured_at,maps_link&order=captured_at.desc`,
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` } }
+    );
+    const rows = await res.json();
+
+    const latestMap = {};
+    rows.forEach(r => { if (!latestMap[r.dpcd]) latestMap[r.dpcd] = r; });
+
+    reportData = ALL_BRANCHES.map(b => {
+      const rec = latestMap[b.dpcd];
+      return {
+        dpcd        : b.dpcd,
+        name        : b.name,
+        submitted   : !!rec,
+        staff_no    : rec ? rec.staff_no : '—',
+        latitude    : rec ? parseFloat(rec.latitude).toFixed(6)  : '—',
+        longitude   : rec ? parseFloat(rec.longitude).toFixed(6) : '—',
+        accuracy    : rec ? rec.accuracy + 'm' : '—',
+        captured_at : rec ? rec.captured_at    : null,
+        maps_link   : rec ? rec.maps_link      : null
+      };
+    });
+
+    document.getElementById('rptLoading').style.display = 'none';
+    updateStats();
+    renderTable(activeTab);
+
+  } catch(e) {
+    document.getElementById('rptLoading').textContent = '❌ Failed to load. Check Supabase config.';
+    console.error(e);
+  }
+}
+
+function updateStats() {
+  const done = reportData.filter(r => r.submitted).length;
+  const pend = reportData.length - done;
+  document.getElementById('statDone').textContent  = done;
+  document.getElementById('statPend').textContent  = pend;
+  document.getElementById('statTotal').textContent = reportData.length;
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  ['all','done','pend'].forEach(t => {
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+  });
+  renderTable(tab);
+}
+
+function renderTable(tab) {
+  let list = reportData;
+  if (tab === 'done') list = reportData.filter(r => r.submitted);
+  if (tab === 'pend') list = reportData.filter(r => !r.submitted);
+
+  const tbody = document.getElementById('rptBody');
+  tbody.innerHTML = '';
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--tm)">No records</td></tr>`;
+    return;
+  }
+
+  list.forEach((r, i) => {
+    const dt = r.captured_at ? new Date(r.captured_at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}) : '—';
+    const mapCell = r.maps_link ? `<a class="map-ico" href="${r.maps_link}" target="_blank">🗺</a>` : '—';
+    tbody.innerHTML += `
+      <tr>
+        <td>${i+1}</td>
+        <td style="font-weight:600">${r.name}</td>
+        <td><span class="bcode">${r.dpcd}</span></td>
+        <td>${r.staff_no}</td>
+        <td>${r.submitted ? '<span class="status-done">✅ Done</span>' : '<span class="status-pend">⏳ Pending</span>'}</td>
+        <td class="coord-cell">${r.latitude}</td>
+        <td class="coord-cell">${r.longitude}</td>
+        <td>${r.accuracy}</td>
+        <td style="font-size:12px;color:var(--tm)">${dt}</td>
+        <td>${mapCell}</td>
+      </tr>`;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT EXCEL
+// ═══════════════════════════════════════════════════════════════
+function exportExcel() {
+  if (!reportData.length) { toast('Load report first'); return; }
+  const tab = activeTab;
+  let list = reportData;
+  if (tab === 'done') list = reportData.filter(r => r.submitted);
+  if (tab === 'pend') list = reportData.filter(r => !r.submitted);
+
+  const wsData = [
+    ['#','Branch Name','DPCD','Staff No.','Status','Latitude','Longitude','Accuracy','Date & Time','Maps Link']
+  ];
+  list.forEach((r,i) => {
+    const dt = r.captured_at ? new Date(r.captured_at).toLocaleString('en-IN') : '';
+    wsData.push([
+      i+1, r.name, r.dpcd, r.staff_no,
+      r.submitted ? 'Submitted' : 'Pending',
+      r.latitude, r.longitude, r.accuracy, dt,
+      r.maps_link || ''
+    ]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [4,32,8,10,10,12,12,10,20,40].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'GPS Report');
+  const label = tab === 'all' ? 'All' : tab === 'done' ? 'Submitted' : 'Pending';
+  XLSX.writeFile(wb, `BranchGPS_${label}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('✅ Excel downloaded!');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT PDF
+// ═══════════════════════════════════════════════════════════════
+function exportPDF() {
+  if (!reportData.length) { toast('Load report first'); return; }
+  const tab = activeTab;
+  let list = reportData;
+  if (tab === 'done') list = reportData.filter(r => r.submitted);
+  if (tab === 'pend') list = reportData.filter(r => !r.submitted);
+
+  const label = tab === 'all' ? 'All Branches' : tab === 'done' ? 'Submitted Branches' : 'Pending Branches';
+  const done = reportData.filter(r=>r.submitted).length;
+  const pend = reportData.length - done;
+  const dt = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+
+  let rows = list.map((r,i) => {
+    const ts = r.captured_at ? new Date(r.captured_at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}) : '—';
+    const st = r.submitted ? '✅ Done' : '⏳ Pending';
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${r.name}</td>
+      <td>${r.dpcd}</td>
+      <td>${r.staff_no}</td>
+      <td class="${r.submitted?'done':'pend'}">${st}</td>
+      <td>${r.latitude}</td>
+      <td>${r.longitude}</td>
+      <td>${r.accuracy}</td>
+      <td>${ts}</td>
+    </tr>`;
+  }).join('');
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>Branch GPS Report</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:28px;color:#1a1a1a;font-size:12px;}
+    h1{color:#002366;font-size:18px;margin-bottom:4px;}
+    .meta{color:#6b7280;font-size:11px;margin-bottom:16px;}
+    .stats{display:flex;gap:16px;margin-bottom:18px;}
+    .sbox{border:1px solid #dde3f0;border-radius:8px;padding:10px 18px;text-align:center;}
+    .sbox .n{font-size:22px;font-weight:700;}
+    .sbox .l{font-size:10px;color:#6b7280;text-transform:uppercase;}
+    .green{color:#1b7a3e;} .red{color:#d32f2f;} .blue{color:#002366;}
+    table{width:100%;border-collapse:collapse;font-size:11px;}
+    th{background:#002366;color:#fff;padding:8px 7px;text-align:left;font-size:10px;text-transform:uppercase;}
+    td{padding:7px;border-bottom:1px solid #dde3f0;}
+    tr:nth-child(even) td{background:#f8faff;}
+    .done{color:#1b7a3e;font-weight:700;} .pend{color:#d32f2f;font-weight:700;}
+    @media print{body{margin:14px;}}
+  </style></head><body>
+  <h1>Branch GPS Location Report</h1>
+  <div class="meta">Generated: ${dt} &nbsp;|&nbsp; Filter: ${label}</div>
+  <div class="stats">
+    <div class="sbox"><div class="n green">${done}</div><div class="l">Submitted</div></div>
+    <div class="sbox"><div class="n red">${pend}</div><div class="l">Pending</div></div>
+    <div class="sbox"><div class="n blue">${reportData.length}</div><div class="l">Total</div></div>
+  </div>
+  <table><thead><tr><th>#</th><th>Branch Name</th><th>DPCD</th><th>Staff No.</th><th>Status</th><th>Latitude</th><th>Longitude</th><th>Accuracy</th><th>Date &amp; Time</th></tr></thead>
+  <tbody>${rows}</tbody></table>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT IMAGE
+// ═══════════════════════════════════════════════════════════════
+async function exportImage() {
+  if (!reportData.length) { toast('Load report first'); return; }
+  const tab = activeTab;
+  let list = reportData;
+  if (tab === 'done') list = reportData.filter(r => r.submitted);
+  if (tab === 'pend') list = reportData.filter(r => !r.submitted);
+
+  const label = tab === 'all' ? 'All Branches' : tab === 'done' ? 'Submitted Branches' : 'Pending Branches';
+  const done = reportData.filter(r=>r.submitted).length;
+  const pend = reportData.length - done;
+  const dt = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;padding:24px;font-family:DM Sans,Arial,sans-serif;width:950px;z-index:-1;';
+
+  const rows = list.map((r,i) => {
+    const ts = r.captured_at ? new Date(r.captured_at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}) : '—';
+    const stColor = r.submitted ? '#1b7a3e' : '#d32f2f';
+    const stBg    = r.submitted ? '#e8f5ee' : '#ffebee';
+    const stTxt   = r.submitted ? '✅ Done' : '⏳ Pending';
+    return `<tr>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0;font-size:12px">${i+1}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0;font-size:12px;font-weight:600">${r.name}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0;font-size:11px;font-family:monospace;color:#002366">${r.dpcd}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0;font-size:11px;font-family:monospace">${r.staff_no}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0">
+        <span style="background:${stBg};color:${stColor};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700">${stTxt}</span>
+      </td>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0;font-size:11px;font-family:monospace;color:#002366">${r.latitude}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0;font-size:11px;font-family:monospace;color:#002366">${r.longitude}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0;font-size:12px">${r.accuracy}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #dde3f0;font-size:11px;color:#6b7280">${ts}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="background:linear-gradient(135deg,#001233,#002366);color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:18px;font-weight:700;letter-spacing:-.3px">Branch GPS Location Report</div>
+        <div style="font-size:12px;opacity:.7;margin-top:3px">Generated: ${dt}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;opacity:.8">Filter: ${label}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:18px;">
+      <div style="flex:1;background:#e8f5ee;border:1.5px solid #25D366;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:26px;font-weight:700;color:#1b7a3e">${done}</div>
+        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Submitted</div>
+      </div>
+      <div style="flex:1;background:#ffebee;border:1.5px solid #d32f2f;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:26px;font-weight:700;color:#d32f2f">${pend}</div>
+        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Pending</div>
+      </div>
+      <div style="flex:1;background:#e8edf8;border:1.5px solid #002366;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:26px;font-weight:700;color:#002366">${reportData.length}</div>
+        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:3px">Total</div>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#002366;">
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">#</th>
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">Branch Name</th>
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">DPCD</th>
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">Staff No.</th>
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">Status</th>
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">Latitude</th>
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">Longitude</th>
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">Accuracy</th>
+          <th style="padding:9px 10px;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px;text-align:left">Date & Time</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:14px;text-align:right;font-size:10px;color:#9ca3af">Branch GPS Locator · Pawan Singh</div>
+  `;
+
+  document.body.appendChild(wrap);
+  toast('Generating image…');
+
+  try {
+    const canvas = await html2canvas(wrap, { scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false });
+    document.body.removeChild(wrap);
+    const link = document.createElement('a');
+    const tabLabel = tab === 'all' ? 'All' : tab === 'done' ? 'Submitted' : 'Pending';
+    link.download = `BranchGPS_${tabLabel}_${new Date().toISOString().slice(0,10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('✅ Image downloaded!');
+  } catch(e) {
+    document.body.removeChild(wrap);
+    toast('❌ Image export failed');
+    console.error(e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEPS / UTILS
+// ═══════════════════════════════════════════════════════════════
+function setStep(n) {
+  ['s1','s2','s3','s4'].forEach((s,i) => {
+    const d=document.getElementById(s+'d'), l=document.getElementById(s+'l');
+    d.className='sdot'; l.className='slbl';
+    if(i<n){d.classList.add('done');d.textContent='✓';}
+    else if(i===n){d.classList.add('active');l.classList.add('active');d.textContent=i+1;}
+    else{d.textContent=i+1;}
+  });
+}
+function show(id,disp='block'){document.getElementById(id).style.display=disp;}
+function hide(id){document.getElementById(id).style.display='none';}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// Init
+init();
+</script>
+</body>
+</html>
