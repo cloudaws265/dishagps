@@ -677,7 +677,7 @@
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="btn btn-primary" style="flex:1;" id="adminAddBranchBtn">➕ Add Branch</button>
       <button class="mini-btn" id="adminChangePwBtn">🔑 Password</button>
-      <button class="mini-btn" id="adminResetBtn">↺ Reset</button>
+      <button class="mini-btn" id="adminResetBtn">🔄 Refresh</button>
     </div>
     <input type="text" id="adminSearchBox" placeholder="Search branch / DPCD..." style="margin-bottom:10px;">
     <div class="branch-list" id="adminBranchList" style="max-height:380px;"></div>
@@ -774,84 +774,27 @@
   }
 })();
 
-// ===================== DATA (full 54-branch report, 19 June 2026) =====================
-const DEFAULT_BRANCHES = [
-{n:"100 FEET ROAD KALYAN NAGAR",d:"10667",s:"856895",lat:13.018061,lng:77.653975},
-{n:"BAGALAGUNTE",d:"2891",s:"911096",lat:13.058574,lng:77.506660},
-{n:"BAGALUR",d:"476",s:"889202",lat:13.134934,lng:77.668329},
-{n:"BAGALUR CURRENCY CHEST",d:"7618",s:"ADMINMANUAL",lat:13.135165,lng:77.668276},
-{n:"BANASWADI",d:"10459",s:"ADMINMANUAL",lat:13.021014,lng:77.643744},
-{n:"BHUVANESWARINAGAR",d:"2973",s:"849396",lat:13.055244,lng:77.599327},
-{n:"CHIKKABANAVARA",d:"5597",s:"884611",lat:13.070778,lng:77.504304},
-{n:"COLES ROAD FRAZER TOWN",d:"407",s:"855477",lat:12.996412,lng:77.612102},
-{n:"D'COSTA LAYOUT",d:"432",s:"889025",lat:13.000569,lng:77.623587},
-{n:"DASARAHALLI",d:"6363",s:"915414",lat:13.051428,lng:77.612035},
-{n:"DEVARAJEEVANAHALLI",d:"419",s:"ADMINMANUAL",lat:13.004777,lng:77.613442},
-{n:"GANGAMMA CIRCLE",d:"10444",s:"860028",lat:13.057836,lng:77.546691},
-{n:"GANGANAGAR (GG HALLI)",d:"10458",s:"857505",lat:13.021919,lng:77.592395},
-{n:"GKVK",d:"2737",s:"ADMINMANUAL",lat:13.078113,lng:77.578778},
-{n:"GOKULA",d:"690",s:"861855",lat:13.027822,lng:77.558528},
-{n:"HEBBAL",d:"425",s:"ADMINMANUAL",lat:13.035673,lng:77.589238},
-{n:"HENNUR ROAD",d:"3043",s:"897002",lat:13.031329,lng:77.635552},
-{n:"HESARAGHATTA",d:"3404",s:"889066",lat:13.139023,lng:77.478569},
-{n:"I A F STATION HEBBAL",d:"10473",s:"865686",lat:13.017017,lng:77.583971},
-{n:"INDIAN INSTITUTE OF SCIENCE",d:"683",s:"858734",lat:13.016936,lng:77.564822},
-{n:"JALAHALLI",d:"3195",s:"913619",lat:13.045041,lng:77.521514},
-{n:"JALAVAYU VIHAR",d:"10469",s:"890191",lat:13.021468,lng:77.637134},
-{n:"KADUGONDANAHALLI (K G HALLI)",d:"10423",s:"ADMINMANUAL",lat:13.039936,lng:77.620667},
-{n:"KALKERE",d:"5910",s:"891449",lat:13.037711,lng:77.676283},
-{n:"KALYANANAGAR",d:"2456",s:"ADMINMANUAL",lat:13.021538,lng:77.643771},
-{n:"KAREGUDDADAHALLI",d:"10679",s:"864099",lat:13.079163,lng:77.515594},
-{n:"KASTURI NAGAR",d:"10668",s:"901912",lat:13.004866,lng:77.656818},
-{n:"KODIGEHALLI",d:"10690",s:"ADMINMANUAL",lat:13.060120,lng:77.577962},
-{n:"KRISHNARAJAPURAM-II",d:"10420",s:"860806",lat:13.008825,lng:77.695992},
-{n:"LINGARAJAPURAM",d:"10445",s:"859922",lat:13.015219,lng:77.630859},
-{n:"LOTTEGOLLAHALLI (MARUTHI NAGAR)",d:"2834",s:"856952",lat:13.047545,lng:77.571749},
-{n:"MARUTHINAGAR",d:"4787",s:"902698",lat:13.104492,lng:77.607337},
-{n:"MSME SULABH BENGALURU NORTH",d:"7088",s:"906405",lat:13.007262,lng:77.582190},
-{n:"R M V EXTN",d:"888",s:"847162",lat:13.007152,lng:77.582186},
-{n:"RAH YELAHANKA",d:"5036",s:"907555",lat:13.105678,lng:77.581593},
-{n:"RAJANUKUNTE",d:"4788",s:"882585",lat:13.169199,lng:77.564391},
-{n:"RAMAMURTHYNAGAR",d:"10489",s:"857033",lat:13.020042,lng:77.674896},
-{n:"RETAIL ASSETS HUB K R PURAM",d:"9282",s:"ADMINMANUAL",lat:13.008825,lng:77.695992},
-{n:"RMV II STAGE",d:"10662",s:"ADMINMANUAL",lat:13.041116,lng:77.566188},
-{n:"SAHAKARNAGAR",d:"2760",s:"880084",lat:13.064110,lng:77.583208},
-{n:"SANJAYNAGAR",d:"2699",s:"856622",lat:13.027070,lng:77.579270},
-{n:"SAUNDERS ROAD FRAZERTOWN",d:"10410",s:"903133",lat:12.996200,lng:77.611384},
-{n:"SHANKARNAGAR APMC YARD",d:"10471",s:"ADMINMANUAL",lat:13.015639,lng:77.543846},
-{n:"SHIVAKOTE",d:"5370",s:"839559",lat:13.133206,lng:77.515510},
-{n:"SONNAPPANAHALLI",d:"10694",s:"873866",lat:13.155074,lng:77.623113},
-{n:"SULTANAPALYA RT NAGAR",d:"10698",s:"858981",lat:13.025519,lng:77.603092},
-{n:"THANISANDRA",d:"10686",s:"917079",lat:13.056963,lng:77.633223},
-{n:"TINDLU",d:"3846",s:"902687",lat:13.069696,lng:77.563714},
-{n:"VIDYARANYAPURA",d:"2615",s:"894389",lat:13.072121,lng:77.556454},
-{n:"VIRGONAGAR GARDEN CITY",d:"10498",s:"900152",lat:13.023219,lng:77.706046},
-{n:"VIVEKANANDA NAGAR",d:"1702",s:"833378",lat:13.001615,lng:77.630895},
-{n:"YELAHANKA DAIRY CROSS",d:"10491",s:"888774",lat:13.097792,lng:77.577753},
-{n:"YELAHANKA OLD TOWN",d:"7781",s:"876374",lat:13.094216,lng:77.600995},
-{n:"YELAHANKA SATELLITE TOWN",d:"1812",s:"ADMINMANUAL",lat:13.096681,lng:77.583846}
-];
-
-const LS_BRANCHES = "cb_route_planner_branches_v2";
-const ADMIN_SESSION_KEY = "cb_route_planner_admin_session";
-
-// ===================== SUPABASE (server-side admin password verification) =====================
+// ===================== SUPABASE (all data lives in the database — nothing hardcoded here) =====================
 const SUPABASE_URL = "https://ffbyevyaghwhudeunadc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmYnlldnlhZ2h3aHVkZXVuYWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Nzc5NDgsImV4cCI6MjA5NzI1Mzk0OH0.LeRflHXlrkYKvJBwVdWh19FRMR19Slhtdj1Sd7wGj1s";
 const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-function loadBranches(){
-  try{
-    const saved = JSON.parse(localStorage.getItem(LS_BRANCHES));
-    if(Array.isArray(saved) && saved.length) return saved;
-  }catch(e){}
-  return DEFAULT_BRANCHES.map(b => ({...b}));
-}
-function saveBranches(){ localStorage.setItem(LS_BRANCHES, JSON.stringify(BRANCHES)); }
-let BRANCHES = loadBranches();
+let BRANCHES = [];
+let adminPasswordCache = null; // kept in memory only for this session, never written to disk
 
-const LS_RO = "cb_route_planner_ro_office";
-const DEFAULT_RO = { lat: 12.968171, lng: 77.587909 };
+async function fetchBranchesFromServer(){
+  if(!sb) return [];
+  const { data, error } = await sb.from("ron_branches_public").select("*").order("name");
+  if(error){ console.error("Branch fetch failed:", error); return []; }
+  return data.map(b => ({ id: b.id, n: b.name, d: b.dpcd, lat: b.lat, lng: b.lng }));
+}
+async function fetchRoFromServer(){
+  if(!sb) return null;
+  const { data, error } = await sb.from("ron_config_public").select("*").limit(1).single();
+  if(error || !data) return null;
+  return { lat: data.ro_lat, lng: data.ro_lng };
+}
+
 const LS_SEEN_INTRO = "cb_route_planner_seen_intro";
 const ORDINALS = ["First","Second","Third","Fourth","Fifth","Sixth","Seventh","Eighth","Ninth","Tenth"];
 const CONNECTORS = ["From there, head to","Next up is","Moving on to","After that, it's","The following stop is"];
@@ -978,19 +921,30 @@ function refreshBranchTags(){
 startBranchSelect.addEventListener("change", refreshBranchTags);
 endBranchSelect.addEventListener("change", refreshBranchTags);
 
-// ===================== RO OFFICE =====================
-function getRO(){
+// ===================== RO OFFICE (cached in memory from server, never hardcoded) =====================
+const ADMIN_SESSION_KEY = "cb_route_planner_admin_session";
+let CURRENT_RO = { lat: 12.97, lng: 77.59 }; // placeholder until the real value arrives from the server
+
+function getRO(){ return CURRENT_RO; }
+
+async function saveRO(lat,lng){
+  if(!sb || !adminPasswordCache){ alert("Admin session expired. Please log in again from the Admin panel."); return; }
   try{
-    const saved = JSON.parse(localStorage.getItem(LS_RO));
-    if(saved && typeof saved.lat === "number" && typeof saved.lng === "number") return saved;
-  }catch(e){}
-  return { ...DEFAULT_RO };
-}
-function saveRO(lat,lng){
-  localStorage.setItem(LS_RO, JSON.stringify({lat:parseFloat(lat), lng:parseFloat(lng)}));
-  renderROBoxes();
-  renderNearestBox();
-  renderAdminRoDisplay();
+    const { data, error } = await sb.rpc("admin_set_ro_location", {
+      admin_password: adminPasswordCache, p_lat: parseFloat(lat), p_lng: parseFloat(lng)
+    });
+    if(error) throw error;
+    if(data === true){
+      CURRENT_RO = { lat: parseFloat(lat), lng: parseFloat(lng) };
+      renderROBoxes();
+      renderNearestBox();
+      renderAdminRoDisplay();
+    } else {
+      alert("Could not update — admin session may have expired. Please log in again.");
+    }
+  }catch(e){
+    alert("Could not update RO Office location: " + ((e&&e.message)||e));
+  }
 }
 function renderROBoxes(){
   [["roBoxStart","startToggle",startMode],["roBoxEnd","endToggle",endMode]].forEach(([boxId,toggleId,mode]) => {
@@ -1211,6 +1165,7 @@ document.getElementById("adminLoginSubmitBtn").addEventListener("click", async (
     if(error) throw error;
     if(data === true){
       sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+      adminPasswordCache = entered;
       closeAdminLogin();
       openAdminPanel();
     } else {
@@ -1241,6 +1196,7 @@ document.getElementById("adminRoManualBtn").addEventListener("click", editROProm
 adminPanelModal.addEventListener("click", (e) => { if(e.target === adminPanelModal) closeAdminPanel(); });
 document.getElementById("adminLogoutBtn").addEventListener("click", () => {
   sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  adminPasswordCache = null;
   closeAdminPanel();
 });
 document.getElementById("adminSearchBox").addEventListener("input", renderAdminBranchList);
@@ -1269,18 +1225,20 @@ document.getElementById("adminChangePwBtn").addEventListener("click", async () =
   try{
     const { data, error } = await sb.rpc("set_admin_password", { old_password: current, new_password: newPw.trim() });
     if(error) throw error;
-    if(data === true) alert("Admin password updated.");
+    if(data === true){ adminPasswordCache = newPw.trim(); alert("Admin password updated."); }
     else alert("Incorrect current password.");
   }catch(e){
     alert("Could not update password: " + ((e&&e.message)||e));
   }
 });
-document.getElementById("adminResetBtn").addEventListener("click", () => {
-  if(!confirm("Reset to the original 54-branch list from the latest GPS report? All admin edits (added/removed/modified branches) will be lost.")) return;
-  BRANCHES = DEFAULT_BRANCHES.map(b => ({...b}));
-  saveBranches();
+document.getElementById("adminResetBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("adminResetBtn");
+  const original = btn.textContent;
+  btn.textContent = "Refreshing...";
+  BRANCHES = await fetchBranchesFromServer();
   rebuildBranchUI();
   renderAdminBranchList();
+  btn.textContent = original;
 });
 
 // ===================== ADMIN: ADD/EDIT BRANCH FORM =====================
@@ -1301,7 +1259,7 @@ function openBranchForm(idx){
     document.getElementById("branchFormTitle").textContent = "✏️ Edit Branch";
     document.getElementById("bfName").value = b.n;
     document.getElementById("bfDpcd").value = b.d;
-    document.getElementById("bfStaff").value = b.s || "";
+    document.getElementById("bfStaff").value = "";
     document.getElementById("bfLat").value = b.lat;
     document.getElementById("bfLng").value = b.lng;
   }
@@ -1324,7 +1282,7 @@ document.getElementById("bfUseGpsBtn").addEventListener("click", () => {
   );
 });
 
-document.getElementById("bfSaveBtn").addEventListener("click", () => {
+document.getElementById("bfSaveBtn").addEventListener("click", async () => {
   const name = document.getElementById("bfName").value.trim();
   let dpcd = document.getElementById("bfDpcd").value.trim();
   const staff = document.getElementById("bfStaff").value.trim();
@@ -1338,27 +1296,56 @@ document.getElementById("bfSaveBtn").addEventListener("click", () => {
     return;
   }
   if(!dpcd) dpcd = "NEW-" + Date.now().toString().slice(-6);
+  if(!adminPasswordCache){ msgEl.innerHTML = `<div class="msg error">Admin session expired. Please log in again.</div>`; return; }
 
-  const newBranch = { n: name.toUpperCase(), d: dpcd, s: staff || "ADMINMANUAL", lat, lng };
-  if(editingBranchIdx === null){
-    BRANCHES.push(newBranch);
-  } else {
-    BRANCHES[editingBranchIdx] = newBranch;
+  const saveBtn = document.getElementById("bfSaveBtn");
+  saveBtn.disabled = true;
+  const originalLabel = saveBtn.textContent;
+  saveBtn.innerHTML = `<span class="spinner"></span>Saving...`;
+  try{
+    let result;
+    if(editingBranchIdx === null){
+      result = await sb.rpc("admin_add_branch", {
+        admin_password: adminPasswordCache, p_name: name.toUpperCase(), p_dpcd: dpcd,
+        p_staff_no: staff || "ADMINMANUAL", p_lat: lat, p_lng: lng
+      });
+    } else {
+      const b = BRANCHES[editingBranchIdx];
+      result = await sb.rpc("admin_update_branch", {
+        admin_password: adminPasswordCache, p_id: b.id, p_name: name.toUpperCase(), p_dpcd: dpcd,
+        p_staff_no: staff || "ADMINMANUAL", p_lat: lat, p_lng: lng
+      });
+    }
+    if(result.error) throw result.error;
+    if(result.data !== true){ msgEl.innerHTML = `<div class="msg error">Could not save — admin session may have expired. Please log in again.</div>`; saveBtn.disabled=false; saveBtn.textContent=originalLabel; return; }
+
+    BRANCHES = await fetchBranchesFromServer();
+    rebuildBranchUI();
+    closeBranchForm();
+    renderAdminBranchList();
+  }catch(e){
+    msgEl.innerHTML = `<div class="msg error">Could not save: ${(e&&e.message)||e}${(e&&e.message&&e.message.includes("duplicate")) ? " (DPCD code already in use by another branch)" : ""}</div>`;
   }
-  saveBranches();
-  rebuildBranchUI();
-  closeBranchForm();
-  renderAdminBranchList();
+  saveBtn.disabled = false;
+  saveBtn.textContent = originalLabel;
 });
 
-function deleteBranch(idx){
+async function deleteBranch(idx){
   const b = BRANCHES[idx];
   if(!confirm(`Delete "${b.n}"? This cannot be undone.`)) return;
-  BRANCHES.splice(idx,1);
-  saveBranches();
-  rebuildBranchUI();
-  renderAdminBranchList();
+  if(!adminPasswordCache){ alert("Admin session expired. Please log in again."); return; }
+  try{
+    const { data, error } = await sb.rpc("admin_delete_branch", { admin_password: adminPasswordCache, p_id: b.id });
+    if(error) throw error;
+    if(data !== true){ alert("Could not delete — admin session may have expired. Please log in again."); return; }
+    BRANCHES = await fetchBranchesFromServer();
+    rebuildBranchUI();
+    renderAdminBranchList();
+  }catch(e){
+    alert("Could not delete branch: " + ((e&&e.message)||e));
+  }
 }
+
 
 // ===================== TOGGLES =====================
 function wireToggle(toggleId, setMode, after){
@@ -2196,8 +2183,25 @@ document.getElementById("waBtn").addEventListener("click", () => {
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
 });
 
-// ===================== INITIAL BRANCH UI BUILD (after all selects/lists are declared above) =====================
-rebuildBranchUI();
+// ===================== INITIAL BOOTSTRAP (fetch everything from the server, nothing hardcoded) =====================
+async function bootstrapApp(){
+  branchListEl.innerHTML = `<p style="font-size:.82rem;color:var(--muted);text-align:center;padding:24px 0;"><span class="spinner" style="border-top-color:var(--navy);"></span>Loading branches from server...</p>`;
+  if(!sb){
+    branchListEl.innerHTML = `<p style="font-size:.82rem;color:var(--red);text-align:center;padding:24px 0;">Could not load the data module. Please check your internet connection and reload the page.</p>`;
+    return;
+  }
+  const [branches, ro] = await Promise.all([fetchBranchesFromServer(), fetchRoFromServer()]);
+  if(branches.length === 0){
+    branchListEl.innerHTML = `<p style="font-size:.82rem;color:var(--red);text-align:center;padding:24px 0;">Could not load branches. Check your internet connection, or confirm the Supabase setup SQL has been run.</p>`;
+    return;
+  }
+  BRANCHES = branches;
+  if(ro) CURRENT_RO = ro;
+  rebuildBranchUI();
+  renderROBoxes();
+  renderNearestBox();
+}
+bootstrapApp();
 </script>
 </body>
 </html>
