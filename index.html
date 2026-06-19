@@ -664,6 +664,16 @@
   <div class="modal-sheet">
     <h3>🔐 Admin Panel</h3>
     <p class="what-it-does">Manage the branch directory — add new branches, fix GPS locations, or remove branches. Changes save on this device.</p>
+
+    <div style="background:var(--surface-2);border:1.5px dashed var(--border);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:.78rem;font-weight:800;margin-bottom:6px;">🏢 RO Office Location</div>
+      <div id="adminRoDisplay" style="font-size:.78rem;color:var(--muted);margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="mini-btn" style="flex:1;" id="adminRoGpsBtn">📍 Use my current GPS</button>
+        <button class="mini-btn" style="flex:1;" id="adminRoManualBtn">✏️ Enter manually</button>
+      </div>
+    </div>
+
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="btn btn-primary" style="flex:1;" id="adminAddBranchBtn">➕ Add Branch</button>
       <button class="mini-btn" id="adminChangePwBtn">🔑 Password</button>
@@ -976,26 +986,21 @@ function getRO(){
   }catch(e){}
   return { ...DEFAULT_RO };
 }
-function saveRO(lat,lng){ localStorage.setItem(LS_RO, JSON.stringify({lat:parseFloat(lat), lng:parseFloat(lng)})); renderROBoxes(); }
+function saveRO(lat,lng){
+  localStorage.setItem(LS_RO, JSON.stringify({lat:parseFloat(lat), lng:parseFloat(lng)}));
+  renderROBoxes();
+  renderNearestBox();
+  renderAdminRoDisplay();
+}
 function renderROBoxes(){
-  const ro = getRO();
   [["roBoxStart","startToggle",startMode],["roBoxEnd","endToggle",endMode]].forEach(([boxId,toggleId,mode]) => {
     const box = document.getElementById(boxId);
     const branchSel = boxId === "roBoxStart" ? startBranchSelect : endBranchSelect;
     branchSel.style.display = mode === "branch" ? "block" : "none";
     if(mode !== "ro"){ box.style.display="none"; return; }
     box.style.display="block";
-    if(ro){
-      box.className = "ro-box set";
-      box.innerHTML = `✅ RO Office set: ${ro.lat.toFixed(5)}, ${ro.lng.toFixed(5)} <button class="mini-btn" style="margin-top:8px;" onclick="editROPrompt()">Edit</button>`;
-    }else{
-      box.className = "ro-box";
-      box.innerHTML = `RO Office location not set yet.
-        <div class="ro-edit-row">
-          <button class="mini-btn" onclick="captureROFromGPS()">📍 Use my current GPS</button>
-          <button class="mini-btn" onclick="editROPrompt()">✏️ Enter manually</button>
-        </div>`;
-    }
+    box.className = "ro-box set";
+    box.innerHTML = `✅ RO Office`;
   });
 }
 function captureROFromGPS(){
@@ -1008,12 +1013,18 @@ function captureROFromGPS(){
 }
 function editROPrompt(){
   const ro = getRO();
-  const lat = prompt("RO Office Latitude:", ro ? ro.lat : "13.0");
+  const lat = prompt("RO Office Latitude:", ro.lat);
   if(lat === null) return;
-  const lng = prompt("RO Office Longitude:", ro ? ro.lng : "77.6");
+  const lng = prompt("RO Office Longitude:", ro.lng);
   if(lng === null) return;
   if(isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))){ alert("Please enter valid numbers."); return; }
   saveRO(lat, lng);
+}
+function renderAdminRoDisplay(){
+  const el = document.getElementById("adminRoDisplay");
+  if(!el) return;
+  const ro = getRO();
+  el.textContent = `Current: ${ro.lat.toFixed(6)}, ${ro.lng.toFixed(6)}`;
 }
 renderROBoxes();
 
@@ -1220,10 +1231,13 @@ const adminPanelModal = document.getElementById("adminPanelModal");
 function openAdminPanel(){
   document.getElementById("adminSearchBox").value = "";
   renderAdminBranchList();
+  renderAdminRoDisplay();
   adminPanelModal.classList.add("open");
 }
 function closeAdminPanel(){ adminPanelModal.classList.remove("open"); }
 document.getElementById("adminPanelCloseBtn").addEventListener("click", closeAdminPanel);
+document.getElementById("adminRoGpsBtn").addEventListener("click", captureROFromGPS);
+document.getElementById("adminRoManualBtn").addEventListener("click", editROPrompt);
 adminPanelModal.addEventListener("click", (e) => { if(e.target === adminPanelModal) closeAdminPanel(); });
 document.getElementById("adminLogoutBtn").addEventListener("click", () => {
   sessionStorage.removeItem(ADMIN_SESSION_KEY);
@@ -1422,22 +1436,12 @@ document.getElementById("qdMapsBtn").addEventListener("click", () => {
 let nearestMode = "ro";
 const nearestBranchSelect = document.getElementById("nearestBranchSelect");
 function renderNearestBox(){
-  const ro = getRO();
   const box = document.getElementById("roBoxNearest");
   nearestBranchSelect.style.display = nearestMode === "branch" ? "block" : "none";
   if(nearestMode !== "ro"){ box.style.display = "none"; return; }
   box.style.display = "block";
-  if(ro){
-    box.className = "ro-box set";
-    box.innerHTML = `✅ RO Office set: ${ro.lat.toFixed(5)}, ${ro.lng.toFixed(5)} <button class="mini-btn" style="margin-top:8px;" onclick="editROPrompt()">Edit</button>`;
-  }else{
-    box.className = "ro-box";
-    box.innerHTML = `RO Office location not set yet.
-      <div class="ro-edit-row">
-        <button class="mini-btn" onclick="captureROFromGPS()">📍 Use my current GPS</button>
-        <button class="mini-btn" onclick="editROPrompt()">✏️ Enter manually</button>
-      </div>`;
-  }
+  box.className = "ro-box set";
+  box.innerHTML = `✅ RO Office`;
 }
 wireToggle("nearestToggle", v => { nearestMode = v; renderNearestBox(); });
 renderNearestBox();
