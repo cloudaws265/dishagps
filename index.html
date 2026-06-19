@@ -841,6 +841,7 @@ function saveBranches(){ localStorage.setItem(LS_BRANCHES, JSON.stringify(BRANCH
 let BRANCHES = loadBranches();
 
 const LS_RO = "cb_route_planner_ro_office";
+const DEFAULT_RO = { lat: 12.968171, lng: 77.587909 };
 const LS_SEEN_INTRO = "cb_route_planner_seen_intro";
 const ORDINALS = ["First","Second","Third","Fourth","Fifth","Sixth","Seventh","Eighth","Ninth","Tenth"];
 const CONNECTORS = ["From there, head to","Next up is","Moving on to","After that, it's","The following stop is"];
@@ -968,7 +969,13 @@ startBranchSelect.addEventListener("change", refreshBranchTags);
 endBranchSelect.addEventListener("change", refreshBranchTags);
 
 // ===================== RO OFFICE =====================
-function getRO(){ try{ return JSON.parse(localStorage.getItem(LS_RO)); }catch(e){ return null; } }
+function getRO(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(LS_RO));
+    if(saved && typeof saved.lat === "number" && typeof saved.lng === "number") return saved;
+  }catch(e){}
+  return { ...DEFAULT_RO };
+}
 function saveRO(lat,lng){ localStorage.setItem(LS_RO, JSON.stringify({lat:parseFloat(lat), lng:parseFloat(lng)})); renderROBoxes(); }
 function renderROBoxes(){
   const ro = getRO();
