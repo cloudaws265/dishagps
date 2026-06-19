@@ -1,0 +1,2192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RO-North Navigator | Canara Bank RO Bengaluru North</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A3D68">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RO-North Navigator">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --navy:#0A3D68;
+    --navy-deep:#04213B;
+    --navy-mid:#155D93;
+    --gold:#D6A53C;
+    --gold-deep:#B9821E;
+    --gold-soft:#F3E2B8;
+    --bg:#F2F5FA;
+    --surface:#FFFFFF;
+    --surface-2:#FBFCFE;
+    --ink:#15202E;
+    --muted:#6B7587;
+    --border:#E5E9F0;
+    --green:#157A4F;
+    --green-soft:#E7F6EE;
+    --red:#C0392B;
+    --mono:'SF Mono','Roboto Mono',Consolas,monospace;
+    --shadow-sm:0 1px 3px rgba(15,35,65,.06);
+    --shadow-md:0 10px 28px rgba(15,35,65,.12);
+    --shadow-gold:0 8px 20px rgba(214,165,60,.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(21,93,147,.14), transparent 40%),
+      radial-gradient(circle at 88% 22%, rgba(214,165,60,.16), transparent 38%),
+      radial-gradient(circle at 30% 85%, rgba(21,93,147,.10), transparent 42%),
+      var(--bg);
+    background-size:160% 160%;
+    background-attachment:fixed;
+    animation:ambientDrift 22s ease-in-out infinite alternate;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:36px;
+    overflow-x:hidden;
+  }
+  @keyframes ambientDrift{
+    0%{background-position:0% 0%,100% 0%,40% 100%;}
+    100%{background-position:20% 30%,75% 35%,55% 80%;}
+  }
+  .particle-layer{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;}
+  .bg-particle{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(214,165,60,.55),rgba(214,165,60,0) 70%);animation:particleFloat ease-in-out infinite;}
+  @keyframes particleFloat{
+    0%,100%{transform:translateY(0) translateX(0);opacity:.35;}
+    50%{transform:translateY(-22px) translateX(8px);opacity:.7;}
+  }
+
+  /* ===== SPLASH SCREEN ===== */
+  .splash-screen{
+    position:fixed;inset:0;z-index:1000;
+    background:
+      radial-gradient(circle at 80% 15%, rgba(214,165,60,.35), transparent 50%),
+      radial-gradient(circle at 10% 85%, rgba(21,93,147,.45), transparent 50%),
+      linear-gradient(150deg,var(--navy-deep),var(--navy) 60%,var(--navy-mid));
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;overflow:hidden;
+    transition:opacity .5s ease, visibility .5s ease;
+  }
+  .splash-screen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  .splash-particles{position:absolute;inset:0;overflow:hidden;}
+  .splash-burst{position:absolute;border-radius:50%;background:radial-gradient(circle,#F1D78A,rgba(214,165,60,0) 70%);animation:burstFly 1.3s ease-out forwards;}
+  @keyframes burstFly{from{transform:translate(0,0) scale(1);opacity:1;}to{transform:translate(var(--bx),var(--by)) scale(.2);opacity:0;}}
+  .splash-content{position:relative;z-index:2;text-align:center;color:#fff;padding:20px;animation:splashIn .7s cubic-bezier(.2,.8,.2,1);}
+  @keyframes splashIn{from{opacity:0;transform:translateY(18px) scale(.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+  .splash-icon{font-size:3.2rem;margin-bottom:14px;animation:bounce 2.4s ease-in-out infinite;filter:drop-shadow(0 6px 14px rgba(0,0,0,.3));}
+  .splash-title{font-size:1.7rem;font-weight:900;letter-spacing:.3px;margin:0 0 8px;}
+  .splash-sub{font-size:.85rem;font-weight:300;color:#CFE0F0;margin:0 0 36px;}
+  .splash-tap{
+    display:inline-block;padding:11px 26px;border-radius:30px;
+    border:1.5px solid rgba(255,255,255,.45);font-size:.8rem;font-weight:700;letter-spacing:.4px;
+    animation:tapPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes tapPulse{0%,100%{opacity:.65;transform:scale(1);}50%{opacity:1;transform:scale(1.04);}}
+
+  /* ===== HEADER ===== */
+  header{
+    position:relative;
+    z-index:2;
+    overflow:hidden;
+    padding:24px 18px 30px;
+    background:
+      radial-gradient(circle at 88% -15%, rgba(214,165,60,.40), transparent 55%),
+      radial-gradient(circle at -10% 110%, rgba(21,93,147,.55), transparent 55%),
+      linear-gradient(135deg,var(--navy-deep),var(--navy) 55%,var(--navy-mid));
+    color:#fff;
+  }
+  header::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
+    background:linear-gradient(90deg,var(--gold),#F1D78A,var(--gold));
+  }
+  .sheen{
+    position:absolute;top:0;left:-60%;width:50%;height:100%;
+    background:linear-gradient(75deg,transparent,rgba(255,255,255,.16),transparent);
+    animation:sheenSweep 2.6s ease-out 0.3s 1;
+  }
+  @keyframes sheenSweep{from{left:-60%;}to{left:130%;}}
+  .orb{position:absolute;border-radius:50%;filter:blur(1px);pointer-events:none;animation:orbFloat ease-in-out infinite;}
+  @keyframes orbFloat{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-10px) scale(1.08);}}
+  .head-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .pin-emoji{display:inline-block;animation:bounce 2.4s ease-in-out infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+  header h1{margin:0 0 4px;font-size:1.32rem;font-weight:900;letter-spacing:.3px;}
+  header p{margin:0;font-size:.78rem;font-weight:300;color:#CFE0F0;}
+  .help-btn{
+    flex-shrink:0;width:34px;height:34px;border-radius:50%;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);
+    color:#fff;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .help-btn:active{background:rgba(255,255,255,.26);}
+  .stats-row{display:flex;gap:8px;margin-top:16px;}
+  .stat-chip{
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+    border-radius:11px;padding:7px 11px;font-size:.66rem;font-weight:600;color:#EAF1F8;backdrop-filter:blur(6px);
+  }
+  .stat-chip b{font-family:var(--mono);font-weight:200;color:var(--gold-soft);font-size:1rem;display:block;}
+
+  /* ===== STEPPER ===== */
+  .stepper{display:flex;align-items:center;max-width:520px;margin:16px auto 0;padding:0 16px;position:relative;z-index:2;}
+  .step-node{
+    width:30px;height:30px;border-radius:50%;background:var(--surface);border:2px solid var(--border);
+    color:var(--muted);font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;transition:all .35s ease;
+  }
+  .step-node.active{border-color:var(--navy);color:var(--navy);box-shadow:0 0 0 4px var(--surface-2),0 0 0 5px rgba(10,61,104,.18);}
+  .step-node.done{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .step-line{flex:1;height:3px;background:var(--border);margin:0 6px;border-radius:3px;overflow:hidden;position:relative;}
+  .step-line-fill{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--navy),var(--gold));transition:width .5s ease;}
+  .step-labels{display:flex;max-width:520px;margin:6px auto 0;padding:0 16px;font-size:.62rem;color:var(--muted);font-weight:600;}
+  .step-labels span{flex:1;text-align:center;}
+  .step-labels span:first-child{text-align:left;}
+  .step-labels span:last-child{text-align:right;}
+
+  main, .app-main{max-width:520px;margin:0 auto;padding:16px;position:relative;z-index:2;}
+
+  .app-mode-toggle{max-width:520px;margin:16px auto 0;padding:0 16px;display:flex;gap:8px;position:relative;z-index:2;}
+  .app-mode-toggle button{
+    flex:1;padding:11px 6px;border:1.5px solid var(--border);background:var(--surface);
+    border-radius:12px;font-size:.73rem;font-weight:800;color:var(--muted);cursor:pointer;
+    transition:transform .15s ease,box-shadow .2s ease;box-shadow:var(--shadow-sm);
+  }
+  .app-mode-toggle button:active{transform:scale(.96);}
+  .app-mode-toggle button.active{
+    border-color:var(--gold);background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+    color:#3A2A05;box-shadow:var(--shadow-gold);
+  }
+
+  .step-screen{display:none;}
+  .step-screen.active{display:block;}
+  .step-screen.anim-in{animation:stepReveal .42s cubic-bezier(.2,.7,.2,1);}
+  @keyframes stepReveal{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+  .card{
+    position:relative;z-index:2;
+    background:rgba(255,255,255,.62);
+    border:1px solid rgba(255,255,255,.55);
+    border-radius:18px;
+    padding:18px;margin-bottom:16px;
+    box-shadow:0 8px 24px rgba(15,35,65,.10);
+    backdrop-filter:blur(14px) saturate(1.4);
+    -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  }
+  .card-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+  .card-head .ic{font-size:1.15rem;}
+  .card-head h2{font-size:1rem;margin:0;font-weight:800;color:var(--ink);}
+  .card-sub{font-size:.76rem;color:var(--muted);margin:2px 0 14px;}
+
+  .search-row{display:flex;gap:8px;margin-bottom:10px;}
+  input[type="text"],input[type="number"],input[type="time"],select{
+    flex:1;padding:11px 12px;border:1.5px solid var(--border);border-radius:11px;
+    font-size:.85rem;background:var(--surface-2);color:var(--ink);
+  }
+  input:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,61,104,.10);}
+  .mini-btn{
+    border:1.5px solid var(--border);background:var(--surface-2);color:var(--navy);
+    font-size:.74rem;font-weight:700;padding:8px 11px;border-radius:10px;cursor:pointer;white-space:nowrap;
+    transition:transform .15s ease;
+  }
+  .mini-btn:active{transform:scale(.95);background:#EAF1F8;}
+  .select-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .sel-count{font-size:.78rem;color:var(--navy);font-weight:800;font-family:var(--mono);}
+  .branch-list{max-height:300px;overflow-y:auto;border:1.5px solid var(--border);border-radius:13px;}
+
+  /* ===== NETFLIX-STYLE HORIZONTAL SCROLL ===== */
+  .hscroll-row{
+    display:flex;gap:12px;overflow-x:auto;padding:4px 2px 14px;margin:0 -4px;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  }
+  .hscroll-row::-webkit-scrollbar{height:5px;}
+  .hscroll-row::-webkit-scrollbar-thumb{background:rgba(214,165,60,.45);border-radius:10px;}
+  .hscroll-card{
+    flex:0 0 auto;width:172px;scroll-snap-align:start;
+    background:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.65);
+    border-radius:16px;padding:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    box-shadow:0 6px 16px rgba(15,35,65,.08);transition:transform .15s ease;
+  }
+  .hscroll-card:active{transform:scale(.97);}
+  .hscroll-rank{
+    width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+    color:#fff;font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:10px;
+  }
+  .hscroll-name{font-weight:800;font-size:.83rem;line-height:1.25;margin-bottom:4px;min-height:2.4em;}
+  .hscroll-meta{font-size:.68rem;color:var(--muted);margin-bottom:10px;}
+  .hscroll-km{font-family:var(--mono);font-weight:200;font-size:1.3rem;color:var(--navy-deep);margin-bottom:10px;}
+  .hscroll-card .mini-btn{width:100%;}
+  .branch-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--border);font-size:.84rem;position:relative;}
+  .branch-row:last-child{border-bottom:none;}
+  .branch-row input[type="checkbox"]{width:19px;height:19px;accent-color:var(--navy);flex-shrink:0;}
+  .branch-row label{flex:1;display:flex;flex-direction:column;}
+  .branch-row .bname{font-weight:700;}
+  .branch-row .bmeta{font-size:.68rem;color:var(--muted);}
+  .branch-row.hidden{display:none;}
+  .branch-tag{
+    font-size:.62rem;font-weight:800;padding:3px 7px;border-radius:7px;white-space:nowrap;
+    background:var(--gold-soft);color:var(--gold-deep);
+  }
+
+  .pt-toggle,.view-toggle{display:flex;gap:6px;margin-bottom:10px;}
+  .pt-toggle button,.view-toggle button{
+    flex:1;padding:10px 4px;border:1.5px solid var(--border);background:var(--surface-2);
+    border-radius:11px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s ease;
+  }
+  .pt-toggle button.active,.view-toggle button.active{
+    border-color:var(--navy);background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:#fff;
+    box-shadow:var(--shadow-sm);
+  }
+  .ro-box{background:var(--surface-2);border:1.5px dashed var(--border);border-radius:12px;padding:11px;font-size:.76rem;color:var(--muted);margin-bottom:10px;}
+  .ro-box.set{color:var(--green);border-color:#bfe6d2;background:var(--green-soft);}
+  .ro-edit-row{display:flex;gap:6px;margin-top:8px;}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin:14px 0 4px;font-size:.82rem;font-weight:700;}
+  .checkbox-row input{width:19px;height:19px;accent-color:var(--navy);}
+  .end-section{margin-top:12px;}
+  .end-section.disabled{opacity:.4;pointer-events:none;}
+
+  .timing-box{margin-top:16px;padding-top:16px;border-top:1.5px dashed var(--border);}
+  .timing-box .lbl-sm{font-size:.78rem;font-weight:800;margin-bottom:8px;color:var(--ink);}
+  .timing-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .timing-grid .full{grid-column:1/-1;}
+  .field-cap{font-size:.66rem;color:var(--muted);margin-bottom:3px;display:block;font-weight:600;}
+
+  /* ===== NAV BUTTONS ===== */
+  .nav-row{display:flex;gap:10px;margin-top:6px;}
+  .btn{
+    border:none;border-radius:13px;font-weight:800;font-size:.9rem;cursor:pointer;padding:14px;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s ease,box-shadow .15s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{
+    flex:1;background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#3A2A05;box-shadow:var(--shadow-gold);
+  }
+  .btn-primary:disabled{opacity:.45;box-shadow:none;}
+  .btn-ghost{
+    background:var(--surface);border:1.5px solid var(--border);color:var(--navy);flex:0 0 auto;padding:14px 18px;
+  }
+  .btn-wide{width:100%;}
+  .btn-navy{background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:#fff;box-shadow:var(--shadow-md);}
+  .btn-whatsapp{background:linear-gradient(135deg,#22B860,#1B9650);color:#fff;box-shadow:0 8px 20px rgba(34,184,96,.3);}
+
+  .msg{font-size:.78rem;padding:11px 13px;border-radius:11px;margin:10px 0;font-weight:600;}
+  .msg.error{background:#FBEAE8;color:var(--red);}
+  .msg.info{background:#E7EEF5;color:var(--navy);}
+
+  /* ===== RESULTS ===== */
+  .total-banner{
+    background:linear-gradient(135deg,#FFF7E6,var(--gold-soft));border:1.5px solid #ECD9A0;
+    border-radius:16px;padding:18px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden;
+  }
+  .total-banner .big{font-size:2.1rem;font-weight:200;letter-spacing:-.5px;color:var(--navy-deep);font-family:var(--mono);}
+  .total-banner .lbl{font-size:.7rem;color:#8A6D1E;text-transform:uppercase;letter-spacing:.6px;font-weight:800;}
+  .total-banner .sub2{font-size:.76rem;color:#8A6D1E;margin-top:6px;font-weight:600;}
+
+  .progress-banner{
+    position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:var(--green-soft);border:1.5px solid #bfe6d2;border-radius:14px;
+    padding:11px 13px;margin-bottom:14px;font-size:.76rem;color:var(--green);font-weight:800;
+  }
+  .progress-banner.done{background:var(--gold-soft);color:#8A6D1E;border-color:#ECD9A0;}
+  .progress-bar-track{flex:1;height:7px;background:#fff;border-radius:7px;overflow:hidden;margin:0 8px;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),#28C77A);border-radius:7px;transition:width .4s ease;}
+  .reset-link{font-size:.66rem;color:var(--muted);text-decoration:underline;cursor:pointer;font-weight:700;background:none;border:none;}
+  .confetti-piece{position:absolute;font-size:14px;animation:confettiFly .85s ease-out forwards;pointer-events:none;}
+  @keyframes confettiFly{to{transform:translate(var(--dx),var(--dy)) scale(.3) rotate(180deg);opacity:0;}}
+
+  .view-toggle{margin-top:2px;}
+  .timeline{position:relative;padding-left:36px;}
+  .timeline::before{content:"";position:absolute;left:14px;top:6px;bottom:6px;width:2px;background:var(--border);}
+  .tl-item{position:relative;padding-bottom:19px;opacity:0;animation:fadeInUp .45s ease forwards;}
+  .tl-item:last-child{padding-bottom:0;}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .tl-dot{
+    position:absolute;left:-36px;top:0;width:30px;height:30px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#fff;font-size:.74rem;font-weight:800;
+    display:flex;align-items:center;justify-content:center;border:3px solid #fff;
+    box-shadow:0 0 0 1px var(--border),var(--shadow-sm);cursor:pointer;
+  }
+  .tl-dot.start{background:linear-gradient(135deg,var(--green),#1FA868);}
+  .tl-dot.end{background:linear-gradient(135deg,var(--red),#A52E20);}
+  .tl-dot.visited{background:#AEB7C4;}
+  .tl-dot.next-glow{animation:pulseGlow 1.6s ease-in-out infinite;}
+  @keyframes pulseGlow{0%{box-shadow:0 0 0 0 rgba(214,165,60,.5);}70%{box-shadow:0 0 0 9px rgba(214,165,60,0);}100%{box-shadow:0 0 0 0 rgba(214,165,60,0);}}
+  .tl-name{font-weight:800;font-size:.87rem;}
+  .tl-item.visited .tl-name{text-decoration:line-through;color:var(--muted);}
+  .tl-meta{font-size:.71rem;color:var(--muted);margin-top:1px;}
+  .tl-leg{font-size:.71rem;color:var(--navy);font-weight:700;margin-top:3px;font-family:var(--mono);}
+  .tl-eta{font-size:.71rem;color:#8A6D1E;font-weight:700;margin-top:2px;}
+  .tl-hint{font-size:.66rem;color:var(--muted);margin-top:6px;text-align:center;}
+
+  .story-box{background:var(--surface-2);border:1.5px solid var(--border);border-radius:14px;padding:15px;font-size:.86rem;line-height:1.68;}
+  .story-box p{margin:0 0 11px;}
+  .story-box p:last-child{margin-bottom:0;}
+  .story-box b{color:var(--navy-deep);}
+
+  canvas{width:100%;height:260px;border-radius:14px;background:var(--surface-2);border:1.5px solid var(--border);display:block;margin-top:14px;}
+
+  .note{font-size:.7rem;color:var(--muted);margin-top:12px;line-height:1.45;}
+  footer{text-align:center;font-size:.7rem;color:var(--muted);padding:20px 16px 6px;position:relative;z-index:2;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.25);border-top-color:#3A2A05;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:-2px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ===== HELP MODAL ===== */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(8,20,38,.55);display:none;align-items:flex-end;justify-content:center;z-index:50;
+  }
+  .modal-overlay.open{display:flex;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .modal-sheet{
+    background:rgba(255,255,255,.78);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:22px 20px 26px;
+    max-height:84vh;overflow-y:auto;animation:sheetUp .35s cubic-bezier(.2,.8,.2,1);
+    backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+    border-top:1px solid rgba(255,255,255,.6);
+  }
+  @keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .modal-sheet h3{margin:0 0 4px;font-size:1.1rem;font-weight:900;color:var(--navy-deep);}
+  .modal-sheet .what-it-does{font-size:.84rem;color:var(--muted);margin:0 0 18px;line-height:1.5;}
+  .guide-step{display:flex;gap:12px;margin-bottom:16px;}
+  .guide-ic{
+    flex-shrink:0;width:38px;height:38px;border-radius:11px;background:var(--navy-soft,#E7EEF5);
+    background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:1rem;
+  }
+  .guide-txt b{display:block;font-size:.85rem;color:var(--ink);margin-bottom:2px;}
+  .guide-txt span{font-size:.78rem;color:var(--muted);line-height:1.45;}
+  .tip-box{background:var(--gold-soft);border-radius:13px;padding:12px 14px;font-size:.78rem;color:#7A5E16;margin:14px 0 18px;line-height:1.5;}
+  .modal-close-btn{width:100%;}
+</style>
+</head>
+<body>
+
+<div class="particle-layer" id="particleLayer"></div>
+
+<div class="splash-screen" id="splashScreen">
+  <div class="splash-particles" id="splashParticles"></div>
+  <div class="splash-content">
+    <div class="splash-icon">🧭</div>
+    <h1 class="splash-title">RO-North Navigator</h1>
+    <p class="splash-sub">RO Bengaluru North · GA Section</p>
+    <div class="splash-tap">Tap to Continue</div>
+  </div>
+</div>
+
+<header>
+  <div class="sheen"></div>
+  <div class="orb" style="width:54px;height:54px;background:rgba(214,165,60,.30);top:14px;right:60px;animation-duration:6.5s;"></div>
+  <div class="orb" style="width:30px;height:30px;background:rgba(255,255,255,.18);top:70px;right:18%;animation-duration:5s;animation-delay:.6s;"></div>
+  <div class="orb" style="width:20px;height:20px;background:rgba(214,165,60,.22);bottom:18px;left:12%;animation-duration:4.2s;animation-delay:1.1s;"></div>
+  <div class="head-top">
+    <div>
+      <h1><span class="pin-emoji">🧭</span> RO-North Navigator</h1>
+      <p>RO Bengaluru North · GA Section · Smart trip planning</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="help-btn" id="installBtn" title="Install App">⬇️</button>
+      <button class="help-btn" id="adminBtn" title="Admin">🔐</button>
+      <button class="help-btn" id="helpBtn">❓</button>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-chip"><b id="totalBranchesChip">37</b>branches loaded</div>
+    <div class="stat-chip"><b id="selChip">0</b>selected</div>
+  </div>
+</header>
+
+<div class="app-mode-toggle" id="appModeToggle">
+  <button data-val="planner" class="active">🧭 Route Planner</button>
+  <button data-val="quick">📏 Quick Distance</button>
+  <button data-val="nearest">📡 Nearest Branches</button>
+</div>
+
+<div id="stepperWrap">
+<div class="stepper">
+  <div class="step-node active" id="node1">1</div>
+  <div class="step-line"><div class="step-line-fill" id="line1"></div></div>
+  <div class="step-node" id="node2">2</div>
+  <div class="step-line"><div class="step-line-fill" id="line2"></div></div>
+  <div class="step-node" id="node3">3</div>
+</div>
+<div class="step-labels"><span>Select</span><span>Start / End</span><span>Route</span></div>
+</div>
+
+<main id="plannerMain" class="app-main">
+
+  <!-- ============ STEP 1 ============ -->
+  <div class="step-screen active anim-in" data-step="1">
+    <div class="card">
+      <div class="card-head"><span class="ic">☑️</span><h2>Select branches to visit</h2></div>
+      <div class="card-sub">Tick branches, or select all for a full sweep.</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="mini-btn" id="savePresetBtn" style="flex:1;">💾 Save Preset</button>
+        <button class="mini-btn" id="loadPresetBtn" style="flex:1;">📂 Load Preset</button>
+      </div>
+      <div class="search-row"><input type="text" id="searchBox" placeholder="Search branch / DPCD..."></div>
+      <div class="select-actions">
+        <span class="sel-count" id="selCountText">0 of 37 selected</span>
+        <div style="display:flex;gap:6px;">
+          <button class="mini-btn" id="selectAllBtn">Select All</button>
+          <button class="mini-btn" id="clearAllBtn">Clear</button>
+        </div>
+      </div>
+      <div class="branch-list" id="branchList"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-primary btn-wide" id="next1Btn">Next: Start &amp; End →</button>
+    </div>
+  </div>
+
+  <!-- ============ STEP 2 ============ -->
+  <div class="step-screen" data-step="2">
+    <div class="card">
+      <div class="card-head"><span class="ic">🧭</span><h2>Start, end &amp; timing</h2></div>
+      <div class="card-sub">Choose where your trip begins, ends — and roughly when.</div>
+
+      <div style="font-size:.78rem;font-weight:800;margin-bottom:7px;color:var(--ink);">Start from</div>
+      <div class="pt-toggle" id="startToggle">
+        <button data-val="ro" class="active">🏢 RO Office</button>
+        <button data-val="current">📍 Current</button>
+        <button data-val="branch">🏦 Pick Branch</button>
+      </div>
+      <div class="ro-box" id="roBoxStart"></div>
+      <select id="startBranchSelect" style="display:none;margin-bottom:10px;"></select>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="roundtripChk" checked>
+        <label for="roundtripChk">Roundtrip — end at the same point I started</label>
+      </div>
+
+      <div class="end-section disabled" id="endSection">
+        <div style="font-size:.78rem;font-weight:800;margin-bottom:7px;margin-top:10px;color:var(--ink);">End at</div>
+        <div class="pt-toggle" id="endToggle">
+          <button data-val="ro" class="active">🏢 RO Office</button>
+          <button data-val="current">📍 Current</button>
+          <button data-val="branch">🏦 Pick Branch</button>
+        </div>
+        <div class="ro-box" id="roBoxEnd"></div>
+        <select id="endBranchSelect" style="display:none;margin-bottom:10px;"></select>
+      </div>
+
+      <div class="timing-box">
+        <div class="lbl-sm">⏱ Timing — for arrival time estimates</div>
+        <div class="timing-grid">
+          <div><span class="field-cap">Start time</span><input type="time" id="startTimeInput"></div>
+          <div><span class="field-cap">Avg. time / branch (min)</span><input type="number" id="dwellInput" value="20" min="0" max="120"></div>
+          <div class="full">
+            <span class="field-cap">Traffic / road condition</span>
+            <select id="trafficSelect">
+              <option value="30">🟢 Light traffic (~30 km/h)</option>
+              <option value="22" selected>🟡 Normal city traffic (~22 km/h)</option>
+              <option value="15">🔴 Heavy traffic (~15 km/h)</option>
+            </select>
+          </div>
+          <div class="full">
+            <span class="field-cap">Road distance buffer (vs straight-line GPS)</span>
+            <select id="roadBufferSelect">
+              <option value="1.0">0% — straight-line only (not recommended)</option>
+              <option value="1.15">+15% — highways / open areas</option>
+              <option value="1.25">+25% — mixed roads</option>
+              <option value="1.4" selected>+40% — typical Bengaluru city roads</option>
+              <option value="1.6">+60% — dense old city / lots of detours</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkbox-row" style="margin-top:14px;">
+        <input type="checkbox" id="splitDaysChk">
+        <label for="splitDaysChk">Split into multiple days if it won't fit in one day</label>
+      </div>
+      <div id="dayEndWrap" style="display:none;margin-top:10px;">
+        <span class="field-cap">Working day ends at</span>
+        <input type="time" id="dayEndInput" value="18:00">
+      </div>
+    </div>
+    <div class="note" style="margin:0 0 0;">💡 Just travelling between 2 branches? Skip Step 1 — simply set the start and end using "Pick Branch" above, and the app will build a direct trip for you.</div>
+    <div id="msgArea"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="back2Btn">← Back</button>
+      <button class="btn btn-primary btn-wide" id="planBtn">🚀 Plan My Route</button>
+    </div>
+  </div>
+
+  <!-- ============ STEP 3 ============ -->
+  <div class="step-screen" data-step="3">
+    <div class="card">
+      <div class="card-head"><span class="ic">🗺️</span><h2>Your optimized route</h2></div>
+
+      <div class="total-banner">
+        <div class="big" id="totalKm">0.0 km</div>
+        <div class="lbl"><span id="stopCount">0</span> stops</div>
+        <div class="sub2" id="totalTimeText"></div>
+      </div>
+
+      <div class="progress-banner" id="progressBanner">
+        <span id="progressText">0 of 0 visited</span>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill" style="width:0%;"></div></div>
+        <button class="reset-link" id="resetProgressBtn">Reset</button>
+      </div>
+
+      <div class="view-toggle" id="viewToggle">
+        <button data-val="list" class="active">📋 List</button>
+        <button data-val="story">📖 Story</button>
+      </div>
+
+      <div id="listView">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+          <button class="mini-btn" id="reorderToggleBtn">🔀 Reorder Stops</button>
+        </div>
+        <div class="timeline" id="timeline"></div>
+        <div class="tl-hint" id="tlHint">💡 Tap any circle to mark that stop as visited.</div>
+      </div>
+      <div id="storyView" class="story-box" style="display:none;"></div>
+      <div id="multiDayView" style="display:none;"></div>
+
+      <canvas id="routeCanvas"></canvas>
+      <div class="nav-row" style="margin-top:14px;">
+        <button class="btn btn-navy btn-wide" id="gmapsBtn">🧭 Open in Google Maps</button>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-whatsapp btn-wide" id="waBtn">📤 Share Plan on WhatsApp</button>
+      </div>
+      <div class="note" id="resultsNote">Distances include a road-distance buffer over straight-line GPS to better match real driving distance. Google Maps still gives the most accurate, live turn-by-turn figure. Very long routes may need splitting — Google Maps limits stops per request.</div>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost btn-wide" id="back3Btn">← Edit Plan</button>
+    </div>
+  </div>
+
+</main>
+
+<div id="quickDistanceMain" class="app-main" style="display:none;">
+  <div class="card">
+    <div class="card-head"><span class="ic">📏</span><h2>Quick Distance Check</h2></div>
+    <div class="card-sub">Instantly check the distance between any two branches — no need to plan a full route.</div>
+
+    <span class="field-cap">From</span>
+    <select id="qdFrom" style="margin-bottom:12px;"></select>
+
+    <div style="text-align:center;margin:2px 0 12px;">
+      <button class="mini-btn" id="qdSwapBtn">⇄ Swap</button>
+    </div>
+
+    <span class="field-cap">To</span>
+    <select id="qdTo" style="margin-bottom:16px;"></select>
+
+    <div id="qdMsg"></div>
+    <button class="btn btn-primary btn-wide" id="qdCalcBtn">📏 Calculate Distance</button>
+
+    <div id="qdResult" style="display:none;margin-top:16px;">
+      <div class="total-banner">
+        <div class="lbl" id="qdRouteLabel" style="margin-bottom:6px;font-size:.74rem;text-transform:none;letter-spacing:0;color:var(--navy-deep);font-weight:700;"></div>
+        <div class="big" id="qdKm">0.0 km</div>
+        <div class="sub2" id="qdTimeText"></div>
+      </div>
+      <button class="btn btn-navy btn-wide" id="qdMapsBtn">🧭 Open in Google Maps</button>
+      <div class="note">This is an average estimate (straight-line + buffer), not exact — the real road distance can be a bit higher or lower depending on how direct the roads are. Tap above for Google Maps' live figure.</div>
+    </div>
+  </div>
+</div>
+
+<div id="nearestMain" class="app-main" style="display:none;">
+  <div class="card">
+    <div class="card-head"><span class="ic">📡</span><h2>Nearest Branches</h2></div>
+    <div class="card-sub">Find which branches are closest to a chosen point — no route planning needed.</div>
+
+    <div style="font-size:.78rem;font-weight:800;margin-bottom:7px;color:var(--ink);">Measure from</div>
+    <div class="pt-toggle" id="nearestToggle">
+      <button data-val="ro" class="active">🏢 RO Office</button>
+      <button data-val="current">📍 Current</button>
+      <button data-val="branch">🏦 Pick Branch</button>
+    </div>
+    <div class="ro-box" id="roBoxNearest"></div>
+    <select id="nearestBranchSelect" style="display:none;margin-bottom:10px;"></select>
+
+    <div id="nearestMsg"></div>
+    <button class="btn btn-primary btn-wide" id="nearestCalcBtn">📡 Find Nearest Branches</button>
+
+    <div id="nearestResultsWrap" style="display:none;margin-top:18px;">
+      <span class="sel-count" id="nearestResultsLabel" style="display:block;margin-bottom:10px;"></span>
+      <div class="branch-list" id="nearestResultsList" style="max-height:420px;"></div>
+      <div class="note">Average estimate (straight-line + buffer) — actual road distance can be a bit higher or lower depending on how direct the roads are. Tap 🧭 next to any branch for Google Maps' live figure.</div>
+    </div>
+  </div>
+</div>
+
+<footer>Pawan Singh · General Administration Section</footer>
+
+<!-- ============ HELP MODAL ============ -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-sheet">
+    <h3>📲 What RO-North Navigator Does</h3>
+    <p class="what-it-does">Plans the smartest, shortest-distance route for your day's branch visits — pick where you need to go, get the best order to visit them, and navigate straight from Google Maps. It works fully offline (only live GPS and Maps navigation need an internet connection).</p>
+
+    <div class="guide-step">
+      <div class="guide-ic">☑️</div>
+      <div class="guide-txt"><b>1. Select branches</b><span>Tick the branches you need to visit, or use "Select All" to choose everyone. Use the search box to find branches quickly.</span></div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-ic">🧭</div>
+      <div class="guide-txt"><b>2. Start, End &amp; Timing</b><span>Choose where you'll start from — RO Office, your current GPS location, or any specific branch. Set the end point the same way (or keep it a roundtrip). Set a start time and traffic condition for accurate arrival estimates.</span></div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-ic">🚀</div>
+      <div class="guide-txt"><b>3. Get your route</b><span>The app works out the shortest total-distance order for your visits. View it as a List or a Story, see it on the mini-map, and open it directly in Google Maps for turn-by-turn navigation.</span></div>
+    </div>
+
+    <div class="tip-box">
+      💡 <b>Pro tips:</b> Tap any circle on the timeline to mark that stop as visited — the progress bar updates automatically. 📖 Story mode reads your whole plan like a narrative. 📤 Share the plan to WhatsApp in one tap.
+    </div>
+
+    <button class="btn btn-primary modal-close-btn" id="helpCloseBtn">Got it, let's start →</button>
+  </div>
+</div>
+
+<!-- ============ ADMIN LOGIN MODAL ============ -->
+<div class="modal-overlay" id="adminLoginModal">
+  <div class="modal-sheet">
+    <h3>🔐 Admin Login</h3>
+    <p class="what-it-does">Enter the admin password to add, edit, or remove branches and their GPS locations.</p>
+    <span class="field-cap">Password</span>
+    <input type="password" id="adminPwInput" style="margin-bottom:10px;" placeholder="Enter admin password">
+    <div id="adminLoginMsg"></div>
+    <button class="btn btn-primary btn-wide" id="adminLoginSubmitBtn">Login</button>
+    <button class="btn btn-ghost btn-wide" style="margin-top:10px;" id="adminLoginCancelBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- ============ ADMIN PANEL MODAL ============ -->
+<div class="modal-overlay" id="adminPanelModal">
+  <div class="modal-sheet">
+    <h3>🔐 Admin Panel</h3>
+    <p class="what-it-does">Manage the branch directory — add new branches, fix GPS locations, or remove branches. Changes save on this device.</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="btn btn-primary" style="flex:1;" id="adminAddBranchBtn">➕ Add Branch</button>
+      <button class="mini-btn" id="adminChangePwBtn">🔑 Password</button>
+      <button class="mini-btn" id="adminResetBtn">↺ Reset</button>
+    </div>
+    <input type="text" id="adminSearchBox" placeholder="Search branch / DPCD..." style="margin-bottom:10px;">
+    <div class="branch-list" id="adminBranchList" style="max-height:380px;"></div>
+    <button class="btn btn-ghost btn-wide" style="margin-top:14px;" id="adminLogoutBtn">🚪 Logout</button>
+    <button class="btn btn-ghost btn-wide" style="margin-top:10px;" id="adminPanelCloseBtn">Close</button>
+  </div>
+</div>
+
+<!-- ============ ADD/EDIT BRANCH FORM MODAL ============ -->
+<div class="modal-overlay" id="branchFormModal">
+  <div class="modal-sheet">
+    <h3 id="branchFormTitle">➕ Add New Branch</h3>
+    <div style="margin-top:10px;"><span class="field-cap">Branch Name</span><input type="text" id="bfName" placeholder="e.g. SANJAYNAGAR"></div>
+    <div style="margin-top:10px;"><span class="field-cap">DPCD Code</span><input type="text" id="bfDpcd" placeholder="e.g. 2699"></div>
+    <div style="margin-top:10px;"><span class="field-cap">Staff No. (optional)</span><input type="text" id="bfStaff" placeholder="e.g. 856622"></div>
+    <div class="timing-grid" style="margin-top:10px;">
+      <div><span class="field-cap">Latitude</span><input type="number" id="bfLat" step="0.000001" placeholder="13.0xxx"></div>
+      <div><span class="field-cap">Longitude</span><input type="number" id="bfLng" step="0.000001" placeholder="77.5xxx"></div>
+    </div>
+    <button class="mini-btn" style="margin-top:8px;width:100%;" id="bfUseGpsBtn">📍 Use my current GPS</button>
+    <div id="bfMsg"></div>
+    <button class="btn btn-primary btn-wide" style="margin-top:14px;" id="bfSaveBtn">💾 Save Branch</button>
+    <button class="btn btn-ghost btn-wide" style="margin-top:10px;" id="bfCancelBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- ============ PRESETS MODAL ============ -->
+<div class="modal-overlay" id="presetsModal">
+  <div class="modal-sheet">
+    <h3>📂 Saved Presets</h3>
+    <p class="what-it-does">Quickly reload a saved selection of branches and settings.</p>
+    <div id="presetsList"></div>
+    <button class="btn btn-ghost btn-wide" id="presetsCloseBtn" style="margin-top:14px;">Close</button>
+  </div>
+</div>
+
+<!-- ============ INSTALL APP MODAL ============ -->
+<div class="modal-overlay" id="installModal">
+  <div class="modal-sheet">
+    <h3>📲 Install This App</h3>
+    <p class="what-it-does">Add it to your home screen for one-tap access, a full-screen app feel, and offline use — no app store needed.</p>
+
+    <div class="guide-step">
+      <div class="guide-ic">🤖</div>
+      <div class="guide-txt"><b>Android (Chrome)</b><span>Tap the button below — if your browser supports it, an install prompt will appear. Otherwise: tap the ⋮ menu (top-right) → "Add to Home screen" / "Install app".</span></div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-ic">🍎</div>
+      <div class="guide-txt"><b>iPhone / iPad (Safari)</b><span>Tap the Share icon <b>⬆️</b> in the toolbar → scroll down and tap "Add to Home Screen" → tap "Add" at the top right.</span></div>
+    </div>
+
+    <div class="tip-box">💡 Once installed, it opens in its own window — no browser address bar — and works offline for everything except live GPS and Google Maps navigation.</div>
+
+    <button class="btn btn-primary modal-close-btn" id="installTriggerBtn">⬇️ Try Install Now</button>
+    <button class="btn btn-ghost btn-wide" style="margin-top:10px;" id="installCloseBtn">Close</button>
+  </div>
+</div>
+
+<script>
+// ===================== SPLASH SCREEN + AMBIENT PARTICLES =====================
+(function(){
+  const splash = document.getElementById("splashScreen");
+  const burstLayer = document.getElementById("splashParticles");
+  const colors = ["#F1D78A","#D6A53C","#ffffff"];
+  for(let i=0;i<18;i++){
+    const s = document.createElement("span");
+    s.className = "splash-burst";
+    const size = 4 + Math.random()*7;
+    s.style.width = size+"px"; s.style.height = size+"px";
+    s.style.left = (45+Math.random()*10)+"%"; s.style.top = (45+Math.random()*10)+"%";
+    s.style.background = `radial-gradient(circle, ${colors[i%colors.length]}, rgba(214,165,60,0) 70%)`;
+    const angle = Math.random()*360, dist = 80+Math.random()*160;
+    s.style.setProperty("--bx", (Math.cos(angle*Math.PI/180)*dist)+"px");
+    s.style.setProperty("--by", (Math.sin(angle*Math.PI/180)*dist)+"px");
+    s.style.animationDelay = (Math.random()*.4)+"s";
+    burstLayer.appendChild(s);
+  }
+  splash.addEventListener("click", () => { splash.classList.add("hide"); }, {once:true});
+})();
+
+(function(){
+  const layer = document.getElementById("particleLayer");
+  const count = 14;
+  for(let i=0;i<count;i++){
+    const p = document.createElement("span");
+    p.className = "bg-particle";
+    const size = 5 + Math.random()*16;
+    p.style.width = size+"px"; p.style.height = size+"px";
+    p.style.left = (Math.random()*100)+"%";
+    p.style.top = (Math.random()*100)+"%";
+    p.style.animationDuration = (5 + Math.random()*7)+"s";
+    p.style.animationDelay = (Math.random()*5)+"s";
+    layer.appendChild(p);
+  }
+})();
+
+// ===================== DATA (full 54-branch report, 19 June 2026) =====================
+const DEFAULT_BRANCHES = [
+{n:"100 FEET ROAD KALYAN NAGAR",d:"10667",s:"856895",lat:13.018061,lng:77.653975},
+{n:"BAGALAGUNTE",d:"2891",s:"911096",lat:13.058574,lng:77.506660},
+{n:"BAGALUR",d:"476",s:"889202",lat:13.134934,lng:77.668329},
+{n:"BAGALUR CURRENCY CHEST",d:"7618",s:"ADMINMANUAL",lat:13.135165,lng:77.668276},
+{n:"BANASWADI",d:"10459",s:"ADMINMANUAL",lat:13.021014,lng:77.643744},
+{n:"BHUVANESWARINAGAR",d:"2973",s:"849396",lat:13.055244,lng:77.599327},
+{n:"CHIKKABANAVARA",d:"5597",s:"884611",lat:13.070778,lng:77.504304},
+{n:"COLES ROAD FRAZER TOWN",d:"407",s:"855477",lat:12.996412,lng:77.612102},
+{n:"D'COSTA LAYOUT",d:"432",s:"889025",lat:13.000569,lng:77.623587},
+{n:"DASARAHALLI",d:"6363",s:"915414",lat:13.051428,lng:77.612035},
+{n:"DEVARAJEEVANAHALLI",d:"419",s:"ADMINMANUAL",lat:13.004777,lng:77.613442},
+{n:"GANGAMMA CIRCLE",d:"10444",s:"860028",lat:13.057836,lng:77.546691},
+{n:"GANGANAGAR (GG HALLI)",d:"10458",s:"857505",lat:13.021919,lng:77.592395},
+{n:"GKVK",d:"2737",s:"ADMINMANUAL",lat:13.078113,lng:77.578778},
+{n:"GOKULA",d:"690",s:"861855",lat:13.027822,lng:77.558528},
+{n:"HEBBAL",d:"425",s:"ADMINMANUAL",lat:13.035673,lng:77.589238},
+{n:"HENNUR ROAD",d:"3043",s:"897002",lat:13.031329,lng:77.635552},
+{n:"HESARAGHATTA",d:"3404",s:"889066",lat:13.139023,lng:77.478569},
+{n:"I A F STATION HEBBAL",d:"10473",s:"865686",lat:13.017017,lng:77.583971},
+{n:"INDIAN INSTITUTE OF SCIENCE",d:"683",s:"858734",lat:13.016936,lng:77.564822},
+{n:"JALAHALLI",d:"3195",s:"913619",lat:13.045041,lng:77.521514},
+{n:"JALAVAYU VIHAR",d:"10469",s:"890191",lat:13.021468,lng:77.637134},
+{n:"KADUGONDANAHALLI (K G HALLI)",d:"10423",s:"ADMINMANUAL",lat:13.039936,lng:77.620667},
+{n:"KALKERE",d:"5910",s:"891449",lat:13.037711,lng:77.676283},
+{n:"KALYANANAGAR",d:"2456",s:"ADMINMANUAL",lat:13.021538,lng:77.643771},
+{n:"KAREGUDDADAHALLI",d:"10679",s:"864099",lat:13.079163,lng:77.515594},
+{n:"KASTURI NAGAR",d:"10668",s:"901912",lat:13.004866,lng:77.656818},
+{n:"KODIGEHALLI",d:"10690",s:"ADMINMANUAL",lat:13.060120,lng:77.577962},
+{n:"KRISHNARAJAPURAM-II",d:"10420",s:"860806",lat:13.008825,lng:77.695992},
+{n:"LINGARAJAPURAM",d:"10445",s:"859922",lat:13.015219,lng:77.630859},
+{n:"LOTTEGOLLAHALLI (MARUTHI NAGAR)",d:"2834",s:"856952",lat:13.047545,lng:77.571749},
+{n:"MARUTHINAGAR",d:"4787",s:"902698",lat:13.104492,lng:77.607337},
+{n:"MSME SULABH BENGALURU NORTH",d:"7088",s:"906405",lat:13.007262,lng:77.582190},
+{n:"R M V EXTN",d:"888",s:"847162",lat:13.007152,lng:77.582186},
+{n:"RAH YELAHANKA",d:"5036",s:"907555",lat:13.105678,lng:77.581593},
+{n:"RAJANUKUNTE",d:"4788",s:"882585",lat:13.169199,lng:77.564391},
+{n:"RAMAMURTHYNAGAR",d:"10489",s:"857033",lat:13.020042,lng:77.674896},
+{n:"RETAIL ASSETS HUB K R PURAM",d:"9282",s:"ADMINMANUAL",lat:13.008825,lng:77.695992},
+{n:"RMV II STAGE",d:"10662",s:"ADMINMANUAL",lat:13.041116,lng:77.566188},
+{n:"SAHAKARNAGAR",d:"2760",s:"880084",lat:13.064110,lng:77.583208},
+{n:"SANJAYNAGAR",d:"2699",s:"856622",lat:13.027070,lng:77.579270},
+{n:"SAUNDERS ROAD FRAZERTOWN",d:"10410",s:"903133",lat:12.996200,lng:77.611384},
+{n:"SHANKARNAGAR APMC YARD",d:"10471",s:"ADMINMANUAL",lat:13.015639,lng:77.543846},
+{n:"SHIVAKOTE",d:"5370",s:"839559",lat:13.133206,lng:77.515510},
+{n:"SONNAPPANAHALLI",d:"10694",s:"873866",lat:13.155074,lng:77.623113},
+{n:"SULTANAPALYA RT NAGAR",d:"10698",s:"858981",lat:13.025519,lng:77.603092},
+{n:"THANISANDRA",d:"10686",s:"917079",lat:13.056963,lng:77.633223},
+{n:"TINDLU",d:"3846",s:"902687",lat:13.069696,lng:77.563714},
+{n:"VIDYARANYAPURA",d:"2615",s:"894389",lat:13.072121,lng:77.556454},
+{n:"VIRGONAGAR GARDEN CITY",d:"10498",s:"900152",lat:13.023219,lng:77.706046},
+{n:"VIVEKANANDA NAGAR",d:"1702",s:"833378",lat:13.001615,lng:77.630895},
+{n:"YELAHANKA DAIRY CROSS",d:"10491",s:"888774",lat:13.097792,lng:77.577753},
+{n:"YELAHANKA OLD TOWN",d:"7781",s:"876374",lat:13.094216,lng:77.600995},
+{n:"YELAHANKA SATELLITE TOWN",d:"1812",s:"ADMINMANUAL",lat:13.096681,lng:77.583846}
+];
+
+const LS_BRANCHES = "cb_route_planner_branches_v2";
+const ADMIN_SESSION_KEY = "cb_route_planner_admin_session";
+
+// ===================== SUPABASE (server-side admin password verification) =====================
+const SUPABASE_URL = "https://ffbyevyaghwhudeunadc.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmYnlldnlhZ2h3aHVkZXVuYWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Nzc5NDgsImV4cCI6MjA5NzI1Mzk0OH0.LeRflHXlrkYKvJBwVdWh19FRMR19Slhtdj1Sd7wGj1s";
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+function loadBranches(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(LS_BRANCHES));
+    if(Array.isArray(saved) && saved.length) return saved;
+  }catch(e){}
+  return DEFAULT_BRANCHES.map(b => ({...b}));
+}
+function saveBranches(){ localStorage.setItem(LS_BRANCHES, JSON.stringify(BRANCHES)); }
+let BRANCHES = loadBranches();
+
+const LS_RO = "cb_route_planner_ro_office";
+const LS_SEEN_INTRO = "cb_route_planner_seen_intro";
+const ORDINALS = ["First","Second","Third","Fourth","Fifth","Sixth","Seventh","Eighth","Ninth","Tenth"];
+const CONNECTORS = ["From there, head to","Next up is","Moving on to","After that, it's","The following stop is"];
+
+let startMode = "ro", endMode = "ro", roundtrip = true;
+let lastRoute = null;
+let visitedSet = new Set();
+let currentStep = 1;
+let tripCelebrated = false;
+let reorderMode = false;
+let roadFactor = 1.4;
+
+// ===================== STEP NAVIGATION =====================
+function showStep(n){
+  document.querySelectorAll(".step-screen").forEach(el => { el.classList.remove("active","anim-in"); });
+  const target = document.querySelector(`.step-screen[data-step="${n}"]`);
+  target.classList.add("active");
+  requestAnimationFrame(() => target.classList.add("anim-in"));
+  [1,2,3].forEach(i => {
+    const node = document.getElementById("node"+i);
+    node.classList.remove("active","done");
+    if(i < n) node.classList.add("done");
+    else if(i === n) node.classList.add("active");
+  });
+  document.getElementById("line1").style.width = n > 1 ? "100%" : "0%";
+  document.getElementById("line2").style.width = n > 2 ? "100%" : "0%";
+  currentStep = n;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+document.getElementById("next1Btn").addEventListener("click", () => showStep(2));
+document.getElementById("back2Btn").addEventListener("click", () => showStep(1));
+document.getElementById("back3Btn").addEventListener("click", () => { cancelLiveAnimation(); showStep(2); });
+
+// ===================== PWA INSTALL =====================
+let deferredInstallPrompt = null;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+if(isStandalone){ document.getElementById("installBtn").style.display = "none"; }
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+window.addEventListener("appinstalled", () => {
+  document.getElementById("installBtn").style.display = "none";
+});
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
+const installModal = document.getElementById("installModal");
+function openInstallModal(){ installModal.classList.add("open"); }
+function closeInstallModal(){ installModal.classList.remove("open"); }
+document.getElementById("installBtn").addEventListener("click", async () => {
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+  } else {
+    openInstallModal();
+  }
+});
+document.getElementById("installTriggerBtn").addEventListener("click", async () => {
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    closeInstallModal();
+  }
+  // if no native prompt is available, the on-screen instructions above already cover it
+});
+document.getElementById("installCloseBtn").addEventListener("click", closeInstallModal);
+installModal.addEventListener("click", (e) => { if(e.target === installModal) closeInstallModal(); });
+
+// ===================== HELP MODAL =====================
+const helpModal = document.getElementById("helpModal");
+function openHelp(){ helpModal.classList.add("open"); }
+function closeHelp(){ helpModal.classList.remove("open"); localStorage.setItem(LS_SEEN_INTRO,"1"); }
+document.getElementById("helpBtn").addEventListener("click", openHelp);
+document.getElementById("helpCloseBtn").addEventListener("click", closeHelp);
+helpModal.addEventListener("click", (e) => { if(e.target === helpModal) closeHelp(); });
+if(!localStorage.getItem(LS_SEEN_INTRO)) openHelp();
+
+// ===================== BRANCH LIST =====================
+const branchListEl = document.getElementById("branchList");
+
+function updateSelCount(){
+  const checked = branchListEl.querySelectorAll('input[type="checkbox"]:checked').length;
+  document.getElementById("selCountText").textContent = `${checked} of ${BRANCHES.length} selected`;
+  document.getElementById("selChip").textContent = checked;
+}
+branchListEl.addEventListener("change", updateSelCount);
+document.getElementById("searchBox").addEventListener("input", (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  branchListEl.querySelectorAll(".branch-row").forEach(row => row.classList.toggle("hidden", q && !row.dataset.search.includes(q)));
+});
+document.getElementById("selectAllBtn").addEventListener("click", () => {
+  branchListEl.querySelectorAll('.branch-row:not(.hidden) input[type="checkbox"]').forEach(cb => cb.checked = true);
+  updateSelCount();
+});
+document.getElementById("clearAllBtn").addEventListener("click", () => {
+  branchListEl.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+  updateSelCount();
+});
+
+// ===================== START/END BRANCH PICKERS =====================
+const startBranchSelect = document.getElementById("startBranchSelect");
+const endBranchSelect = document.getElementById("endBranchSelect");
+
+function refreshBranchTags(){
+  const sIdx = startMode === "branch" ? parseInt(startBranchSelect.value) : null;
+  const eIdx = roundtrip ? sIdx : (endMode === "branch" ? parseInt(endBranchSelect.value) : null);
+  BRANCHES.forEach((b,i) => {
+    const tag = document.getElementById("tag"+i);
+    if(!tag) return;
+    if(sIdx === i && eIdx === i){ tag.style.display="inline-block"; tag.textContent="🏁🏳️ Start & End"; }
+    else if(sIdx === i){ tag.style.display="inline-block"; tag.textContent="🏁 Start point"; }
+    else if(eIdx === i){ tag.style.display="inline-block"; tag.textContent="🏳️ End point"; }
+    else tag.style.display="none";
+  });
+}
+startBranchSelect.addEventListener("change", refreshBranchTags);
+endBranchSelect.addEventListener("change", refreshBranchTags);
+
+// ===================== RO OFFICE =====================
+function getRO(){ try{ return JSON.parse(localStorage.getItem(LS_RO)); }catch(e){ return null; } }
+function saveRO(lat,lng){ localStorage.setItem(LS_RO, JSON.stringify({lat:parseFloat(lat), lng:parseFloat(lng)})); renderROBoxes(); }
+function renderROBoxes(){
+  const ro = getRO();
+  [["roBoxStart","startToggle",startMode],["roBoxEnd","endToggle",endMode]].forEach(([boxId,toggleId,mode]) => {
+    const box = document.getElementById(boxId);
+    const branchSel = boxId === "roBoxStart" ? startBranchSelect : endBranchSelect;
+    branchSel.style.display = mode === "branch" ? "block" : "none";
+    if(mode !== "ro"){ box.style.display="none"; return; }
+    box.style.display="block";
+    if(ro){
+      box.className = "ro-box set";
+      box.innerHTML = `✅ RO Office set: ${ro.lat.toFixed(5)}, ${ro.lng.toFixed(5)} <button class="mini-btn" style="margin-top:8px;" onclick="editROPrompt()">Edit</button>`;
+    }else{
+      box.className = "ro-box";
+      box.innerHTML = `RO Office location not set yet.
+        <div class="ro-edit-row">
+          <button class="mini-btn" onclick="captureROFromGPS()">📍 Use my current GPS</button>
+          <button class="mini-btn" onclick="editROPrompt()">✏️ Enter manually</button>
+        </div>`;
+    }
+  });
+}
+function captureROFromGPS(){
+  if(!navigator.geolocation){ alert("GPS not supported on this device/browser."); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => saveRO(pos.coords.latitude, pos.coords.longitude),
+    err => alert("Could not get GPS location. Please enable location permission and try again."),
+    {enableHighAccuracy:true, timeout:10000}
+  );
+}
+function editROPrompt(){
+  const ro = getRO();
+  const lat = prompt("RO Office Latitude:", ro ? ro.lat : "13.0");
+  if(lat === null) return;
+  const lng = prompt("RO Office Longitude:", ro ? ro.lng : "77.6");
+  if(lng === null) return;
+  if(isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))){ alert("Please enter valid numbers."); return; }
+  saveRO(lat, lng);
+}
+renderROBoxes();
+
+(function(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  document.getElementById("startTimeInput").value = `${hh}:${mm}`;
+})();
+
+// ===================== SAVED PRESETS =====================
+const LS_PRESETS = "cb_route_planner_presets";
+function getPresets(){ try{ return JSON.parse(localStorage.getItem(LS_PRESETS)) || []; }catch(e){ return []; } }
+function savePresetsArr(arr){ localStorage.setItem(LS_PRESETS, JSON.stringify(arr)); }
+
+const presetsModal = document.getElementById("presetsModal");
+function openPresetsModal(){ renderPresetsList(); presetsModal.classList.add("open"); }
+function closePresetsModal(){ presetsModal.classList.remove("open"); }
+document.getElementById("presetsCloseBtn").addEventListener("click", closePresetsModal);
+presetsModal.addEventListener("click", (e) => { if(e.target === presetsModal) closePresetsModal(); });
+
+function renderPresetsList(){
+  const presets = getPresets();
+  const el = document.getElementById("presetsList");
+  if(presets.length === 0){
+    el.className = "";
+    el.innerHTML = `<p style="font-size:.8rem;color:var(--muted);text-align:center;padding:22px 0;">No presets saved yet. Set up your branches and start/end on Step 1 &amp; 2, then tap "Save Preset" to create one.</p>`;
+    return;
+  }
+  el.className = "hscroll-row";
+  el.innerHTML = presets.map((p,i) => `
+    <div class="hscroll-card" style="width:160px;">
+      <div class="hscroll-rank">💾</div>
+      <div class="hscroll-name">${p.name}</div>
+      <div class="hscroll-meta">${p.selectedIdxs.length} branches<br>saved ${new Date(p.savedAt).toLocaleDateString()}</div>
+      <div style="display:flex;gap:6px;">
+        <button class="mini-btn" style="flex:1;" data-action="load" data-i="${i}">Load</button>
+        <button class="mini-btn" data-action="delete" data-i="${i}">🗑️</button>
+      </div>
+    </div>`).join("");
+  el.querySelectorAll("button[data-action]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const i = parseInt(btn.dataset.i);
+      const list = getPresets();
+      if(btn.dataset.action === "load"){ loadPreset(list[i]); }
+      else { list.splice(i,1); savePresetsArr(list); renderPresetsList(); }
+    });
+  });
+}
+
+function setToggleMode(toggleId, val){
+  const btn = document.querySelector(`#${toggleId} button[data-val="${val}"]`);
+  if(btn) btn.click();
+}
+
+function findIdxByDpcd(dpcd){
+  return BRANCHES.findIndex(b => b.d === dpcd);
+}
+
+function loadPreset(p){
+  const dpcds = p.selectedDpcds || [];
+  let missing = 0;
+  branchListEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.checked = dpcds.includes(BRANCHES[parseInt(cb.dataset.idx)].d);
+  });
+  updateSelCount();
+  missing = dpcds.filter(d => findIdxByDpcd(d) === -1).length;
+
+  setToggleMode("startToggle", p.startMode);
+  if(p.startMode === "branch" && p.startBranchDpcd){
+    const idx = findIdxByDpcd(p.startBranchDpcd);
+    if(idx >= 0) startBranchSelect.value = idx;
+  }
+
+  const rtChk = document.getElementById("roundtripChk");
+  rtChk.checked = p.roundtrip;
+  rtChk.dispatchEvent(new Event("change"));
+
+  if(!p.roundtrip){
+    setToggleMode("endToggle", p.endMode);
+    if(p.endMode === "branch" && p.endBranchDpcd){
+      const idx = findIdxByDpcd(p.endBranchDpcd);
+      if(idx >= 0) endBranchSelect.value = idx;
+    }
+  }
+
+  document.getElementById("startTimeInput").value = p.startTime || "09:00";
+  document.getElementById("dwellInput").value = p.dwellMins != null ? p.dwellMins : 20;
+  document.getElementById("trafficSelect").value = String(p.speedKmph || 22);
+  refreshBranchTags();
+  closePresetsModal();
+  showStep(1);
+  if(missing > 0) alert(`Note: ${missing} branch(es) from this preset no longer exist in the directory and were skipped.`);
+}
+
+document.getElementById("savePresetBtn").addEventListener("click", () => {
+  const selectedDpcds = [];
+  branchListEl.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => selectedDpcds.push(BRANCHES[parseInt(cb.dataset.idx)].d));
+  const name = prompt("Name this preset (e.g. 'Yelahanka Cluster'):", "");
+  if(!name || !name.trim()) return;
+  const preset = {
+    name: name.trim(),
+    selectedDpcds,
+    startMode,
+    startBranchDpcd: startMode === "branch" ? BRANCHES[parseInt(startBranchSelect.value)].d : null,
+    roundtrip,
+    endMode,
+    endBranchDpcd: endMode === "branch" ? BRANCHES[parseInt(endBranchSelect.value)].d : null,
+    startTime: document.getElementById("startTimeInput").value,
+    dwellMins: parseFloat(document.getElementById("dwellInput").value) || 20,
+    speedKmph: parseFloat(document.getElementById("trafficSelect").value) || 22,
+    savedAt: Date.now()
+  };
+  const presets = getPresets();
+  presets.unshift(preset);
+  savePresetsArr(presets.slice(0,20));
+  alert(`Preset "${preset.name}" saved!`);
+});
+document.getElementById("loadPresetBtn").addEventListener("click", openPresetsModal);
+
+// ===================== REBUILD BRANCH UI (called on load + after any admin edit) =====================
+function rebuildBranchUI(){
+  document.getElementById("totalBranchesChip").textContent = BRANCHES.length;
+
+  branchListEl.innerHTML = "";
+  BRANCHES.forEach((b, i) => {
+    const row = document.createElement("div");
+    row.className = "branch-row";
+    row.dataset.idx = i;
+    row.dataset.search = (b.n + " " + b.d).toLowerCase();
+    row.innerHTML = `
+      <input type="checkbox" id="b${i}" data-idx="${i}">
+      <label for="b${i}"><span class="bname">${b.n}</span><span class="bmeta">DPCD ${b.d}</span></label>
+      <span class="branch-tag" id="tag${i}" style="display:none;"></span>`;
+    branchListEl.appendChild(row);
+  });
+  updateSelCount();
+
+  [startBranchSelect, endBranchSelect, nearestBranchSelect, qdFrom, qdTo].forEach(sel => {
+    if(!sel) return;
+    const prevVal = sel.value;
+    sel.innerHTML = "";
+    BRANCHES.forEach((b,i) => {
+      const opt = document.createElement("option");
+      opt.value = i; opt.textContent = `${b.n} (DPCD ${b.d})`;
+      sel.appendChild(opt);
+    });
+    if(prevVal !== "" && parseInt(prevVal) < BRANCHES.length) sel.value = prevVal;
+  });
+  if(qdTo && qdTo.value === qdFrom.value && BRANCHES.length > 1) qdTo.selectedIndex = 1;
+
+  refreshBranchTags();
+}
+
+// ===================== ADMIN: LOGIN =====================
+function isAdminLoggedIn(){ return sessionStorage.getItem(ADMIN_SESSION_KEY) === "1"; }
+
+const adminLoginModal = document.getElementById("adminLoginModal");
+function openAdminLogin(){
+  document.getElementById("adminPwInput").value = "";
+  document.getElementById("adminLoginMsg").innerHTML = "";
+  adminLoginModal.classList.add("open");
+}
+function closeAdminLogin(){ adminLoginModal.classList.remove("open"); }
+document.getElementById("adminBtn").addEventListener("click", () => {
+  if(isAdminLoggedIn()) openAdminPanel();
+  else openAdminLogin();
+});
+document.getElementById("adminLoginCancelBtn").addEventListener("click", closeAdminLogin);
+adminLoginModal.addEventListener("click", (e) => { if(e.target === adminLoginModal) closeAdminLogin(); });
+document.getElementById("adminLoginSubmitBtn").addEventListener("click", async () => {
+  const entered = document.getElementById("adminPwInput").value;
+  const msgEl = document.getElementById("adminLoginMsg");
+  const btn = document.getElementById("adminLoginSubmitBtn");
+  msgEl.innerHTML = "";
+  if(!entered){ msgEl.innerHTML = `<div class="msg error">Please enter the password.</div>`; return; }
+  if(!sb){ msgEl.innerHTML = `<div class="msg error">Could not load the security module. Check your internet connection and reload the page.</div>`; return; }
+
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.innerHTML = `<span class="spinner"></span>Checking...`;
+  try{
+    const { data, error } = await sb.rpc("verify_admin_password", { input_password: entered });
+    if(error) throw error;
+    if(data === true){
+      sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+      closeAdminLogin();
+      openAdminPanel();
+    } else {
+      msgEl.innerHTML = `<div class="msg error">Incorrect password.</div>`;
+    }
+  }catch(e){
+    msgEl.innerHTML = `<div class="msg error">Could not reach the server. Check your internet connection, or confirm the Supabase setup SQL has been run. (${(e&&e.message)||e})</div>`;
+  }
+  btn.disabled = false;
+  btn.textContent = originalLabel;
+});
+document.getElementById("adminPwInput").addEventListener("keydown", (e) => {
+  if(e.key === "Enter") document.getElementById("adminLoginSubmitBtn").click();
+});
+
+// ===================== ADMIN: PANEL =====================
+const adminPanelModal = document.getElementById("adminPanelModal");
+function openAdminPanel(){
+  document.getElementById("adminSearchBox").value = "";
+  renderAdminBranchList();
+  adminPanelModal.classList.add("open");
+}
+function closeAdminPanel(){ adminPanelModal.classList.remove("open"); }
+document.getElementById("adminPanelCloseBtn").addEventListener("click", closeAdminPanel);
+adminPanelModal.addEventListener("click", (e) => { if(e.target === adminPanelModal) closeAdminPanel(); });
+document.getElementById("adminLogoutBtn").addEventListener("click", () => {
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  closeAdminPanel();
+});
+document.getElementById("adminSearchBox").addEventListener("input", renderAdminBranchList);
+
+function renderAdminBranchList(){
+  const el = document.getElementById("adminBranchList");
+  const q = (document.getElementById("adminSearchBox").value || "").trim().toLowerCase();
+  el.innerHTML = BRANCHES.map((b,i) => ({b,i}))
+    .filter(({b}) => !q || (b.n+" "+b.d).toLowerCase().includes(q))
+    .map(({b,i}) => `
+      <div class="branch-row">
+        <label style="flex:1;"><span class="bname">${b.n}</span><span class="bmeta">DPCD ${b.d} · ${b.lat.toFixed(5)}, ${b.lng.toFixed(5)}</span></label>
+        <button class="mini-btn" data-edit="${i}">✏️</button>
+        <button class="mini-btn" data-delete="${i}">🗑️</button>
+      </div>`).join("") || `<p style="font-size:.8rem;color:var(--muted);text-align:center;padding:20px 0;">No branches match your search.</p>`;
+  el.querySelectorAll("button[data-edit]").forEach(btn => btn.addEventListener("click", () => openBranchForm(parseInt(btn.dataset.edit))));
+  el.querySelectorAll("button[data-delete]").forEach(btn => btn.addEventListener("click", () => deleteBranch(parseInt(btn.dataset.delete))));
+}
+
+document.getElementById("adminChangePwBtn").addEventListener("click", async () => {
+  if(!sb){ alert("Could not load the security module. Check your internet connection."); return; }
+  const current = prompt("Enter current admin password:");
+  if(current === null) return;
+  const newPw = prompt("Enter new admin password:");
+  if(!newPw || !newPw.trim()) return;
+  try{
+    const { data, error } = await sb.rpc("set_admin_password", { old_password: current, new_password: newPw.trim() });
+    if(error) throw error;
+    if(data === true) alert("Admin password updated.");
+    else alert("Incorrect current password.");
+  }catch(e){
+    alert("Could not update password: " + ((e&&e.message)||e));
+  }
+});
+document.getElementById("adminResetBtn").addEventListener("click", () => {
+  if(!confirm("Reset to the original 54-branch list from the latest GPS report? All admin edits (added/removed/modified branches) will be lost.")) return;
+  BRANCHES = DEFAULT_BRANCHES.map(b => ({...b}));
+  saveBranches();
+  rebuildBranchUI();
+  renderAdminBranchList();
+});
+
+// ===================== ADMIN: ADD/EDIT BRANCH FORM =====================
+let editingBranchIdx = null;
+const branchFormModal = document.getElementById("branchFormModal");
+function openBranchForm(idx){
+  editingBranchIdx = idx;
+  document.getElementById("bfMsg").innerHTML = "";
+  if(idx === null){
+    document.getElementById("branchFormTitle").textContent = "➕ Add New Branch";
+    document.getElementById("bfName").value = "";
+    document.getElementById("bfDpcd").value = "";
+    document.getElementById("bfStaff").value = "";
+    document.getElementById("bfLat").value = "";
+    document.getElementById("bfLng").value = "";
+  } else {
+    const b = BRANCHES[idx];
+    document.getElementById("branchFormTitle").textContent = "✏️ Edit Branch";
+    document.getElementById("bfName").value = b.n;
+    document.getElementById("bfDpcd").value = b.d;
+    document.getElementById("bfStaff").value = b.s || "";
+    document.getElementById("bfLat").value = b.lat;
+    document.getElementById("bfLng").value = b.lng;
+  }
+  branchFormModal.classList.add("open");
+}
+function closeBranchForm(){ branchFormModal.classList.remove("open"); }
+document.getElementById("adminAddBranchBtn").addEventListener("click", () => openBranchForm(null));
+document.getElementById("bfCancelBtn").addEventListener("click", closeBranchForm);
+branchFormModal.addEventListener("click", (e) => { if(e.target === branchFormModal) closeBranchForm(); });
+
+document.getElementById("bfUseGpsBtn").addEventListener("click", () => {
+  if(!navigator.geolocation){ alert("GPS not supported on this device/browser."); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById("bfLat").value = pos.coords.latitude.toFixed(6);
+      document.getElementById("bfLng").value = pos.coords.longitude.toFixed(6);
+    },
+    err => alert("Could not get GPS location. Please enable location permission and try again."),
+    {enableHighAccuracy:true, timeout:10000}
+  );
+});
+
+document.getElementById("bfSaveBtn").addEventListener("click", () => {
+  const name = document.getElementById("bfName").value.trim();
+  let dpcd = document.getElementById("bfDpcd").value.trim();
+  const staff = document.getElementById("bfStaff").value.trim();
+  const lat = parseFloat(document.getElementById("bfLat").value);
+  const lng = parseFloat(document.getElementById("bfLng").value);
+  const msgEl = document.getElementById("bfMsg");
+
+  if(!name){ msgEl.innerHTML = `<div class="msg error">Branch name is required.</div>`; return; }
+  if(isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180){
+    msgEl.innerHTML = `<div class="msg error">Valid latitude (-90 to 90) and longitude (-180 to 180) are required.</div>`;
+    return;
+  }
+  if(!dpcd) dpcd = "NEW-" + Date.now().toString().slice(-6);
+
+  const newBranch = { n: name.toUpperCase(), d: dpcd, s: staff || "ADMINMANUAL", lat, lng };
+  if(editingBranchIdx === null){
+    BRANCHES.push(newBranch);
+  } else {
+    BRANCHES[editingBranchIdx] = newBranch;
+  }
+  saveBranches();
+  rebuildBranchUI();
+  closeBranchForm();
+  renderAdminBranchList();
+});
+
+function deleteBranch(idx){
+  const b = BRANCHES[idx];
+  if(!confirm(`Delete "${b.n}"? This cannot be undone.`)) return;
+  BRANCHES.splice(idx,1);
+  saveBranches();
+  rebuildBranchUI();
+  renderAdminBranchList();
+}
+
+// ===================== TOGGLES =====================
+function wireToggle(toggleId, setMode, after){
+  document.getElementById(toggleId).querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById(toggleId).querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      setMode(btn.dataset.val);
+      if(after) after();
+    });
+  });
+}
+wireToggle("startToggle", v => { startMode = v; }, () => { renderROBoxes(); refreshBranchTags(); });
+wireToggle("endToggle", v => { endMode = v; }, () => { renderROBoxes(); refreshBranchTags(); });
+document.getElementById("roundtripChk").addEventListener("change", (e) => {
+  roundtrip = e.target.checked;
+  document.getElementById("endSection").classList.toggle("disabled", roundtrip);
+  refreshBranchTags();
+});
+document.getElementById("splitDaysChk").addEventListener("change", (e) => {
+  document.getElementById("dayEndWrap").style.display = e.target.checked ? "block" : "none";
+});
+document.getElementById("roadBufferSelect").addEventListener("change", (e) => {
+  roadFactor = parseFloat(e.target.value) || 1.4;
+});
+wireToggle("viewToggle", v => {
+  document.getElementById("listView").style.display = v === "list" ? "block" : "none";
+  document.getElementById("storyView").style.display = v === "story" ? "block" : "none";
+});
+wireToggle("appModeToggle", v => {
+  document.getElementById("stepperWrap").style.display = v === "planner" ? "block" : "none";
+  document.getElementById("plannerMain").style.display = v === "planner" ? "block" : "none";
+  document.getElementById("quickDistanceMain").style.display = v === "quick" ? "block" : "none";
+  document.getElementById("nearestMain").style.display = v === "nearest" ? "block" : "none";
+  if(v !== "planner") cancelLiveAnimation();
+});
+
+// ===================== QUICK DISTANCE CHECK =====================
+const qdFrom = document.getElementById("qdFrom");
+const qdTo = document.getElementById("qdTo");
+
+document.getElementById("qdSwapBtn").addEventListener("click", () => {
+  const a = qdFrom.value, b = qdTo.value;
+  qdFrom.value = b; qdTo.value = a;
+});
+
+let qdLastPair = null;
+document.getElementById("qdCalcBtn").addEventListener("click", () => {
+  const qdMsg = document.getElementById("qdMsg");
+  qdMsg.innerHTML = "";
+  const aIdx = parseInt(qdFrom.value), bIdx = parseInt(qdTo.value);
+  if(aIdx === bIdx){
+    qdMsg.innerHTML = `<div class="msg error">The same branch is selected on both sides — please choose a different branch.</div>`;
+    document.getElementById("qdResult").style.display = "none";
+    return;
+  }
+  const a = BRANCHES[aIdx], b = BRANCHES[bIdx];
+  const km = haversine(a.lat,a.lng,b.lat,b.lng) * roadFactor;
+  const mins = (km/22)*60;
+  document.getElementById("qdResult").style.display = "block";
+  document.getElementById("qdRouteLabel").textContent = `${a.n} → ${b.n}`;
+  countUp(document.getElementById("qdKm"), km, 1, " km");
+  document.getElementById("qdTimeText").textContent = `≈ ${fmtDuration(mins)} estimated drive (normal traffic, ~22 km/h)`;
+  qdLastPair = {a,b};
+});
+
+document.getElementById("qdMapsBtn").addEventListener("click", () => {
+  if(!qdLastPair) return;
+  const { a, b } = qdLastPair;
+  const url = `https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=driving`;
+  window.open(url, "_blank");
+});
+
+// ===================== NEAREST BRANCHES FINDER =====================
+let nearestMode = "ro";
+const nearestBranchSelect = document.getElementById("nearestBranchSelect");
+function renderNearestBox(){
+  const ro = getRO();
+  const box = document.getElementById("roBoxNearest");
+  nearestBranchSelect.style.display = nearestMode === "branch" ? "block" : "none";
+  if(nearestMode !== "ro"){ box.style.display = "none"; return; }
+  box.style.display = "block";
+  if(ro){
+    box.className = "ro-box set";
+    box.innerHTML = `✅ RO Office set: ${ro.lat.toFixed(5)}, ${ro.lng.toFixed(5)} <button class="mini-btn" style="margin-top:8px;" onclick="editROPrompt()">Edit</button>`;
+  }else{
+    box.className = "ro-box";
+    box.innerHTML = `RO Office location not set yet.
+      <div class="ro-edit-row">
+        <button class="mini-btn" onclick="captureROFromGPS()">📍 Use my current GPS</button>
+        <button class="mini-btn" onclick="editROPrompt()">✏️ Enter manually</button>
+      </div>`;
+  }
+}
+wireToggle("nearestToggle", v => { nearestMode = v; renderNearestBox(); });
+renderNearestBox();
+
+document.getElementById("nearestCalcBtn").addEventListener("click", async () => {
+  const msgEl = document.getElementById("nearestMsg");
+  msgEl.innerHTML = "";
+  const btn = document.getElementById("nearestCalcBtn");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span>Locating...`;
+  try{
+    const pt = await resolvePoint(nearestMode, nearestBranchSelect);
+    const ranked = BRANCHES.map((b,i) => ({...b, idx:i, km: haversine(pt.lat,pt.lng,b.lat,b.lng) * roadFactor}))
+      .filter(b => pt.branchIdx === undefined || b.idx !== pt.branchIdx)
+      .sort((a,b) => a.km - b.km);
+
+    document.getElementById("nearestResultsWrap").style.display = "block";
+    document.getElementById("nearestResultsLabel").textContent = `Sorted by distance from ${pt.label || pt.n}`;
+    const listEl = document.getElementById("nearestResultsList");
+    listEl.innerHTML = ranked.map((b,rank) => `
+      <div class="branch-row">
+        <span style="font-weight:800;color:var(--navy);font-family:var(--mono);width:22px;flex-shrink:0;">${rank+1}</span>
+        <label style="flex:1;"><span class="bname">${b.n}</span><span class="bmeta">DPCD ${b.d} · ${b.km.toFixed(1)} km</span></label>
+        <button class="mini-btn" data-lat="${b.lat}" data-lng="${b.lng}">🧭</button>
+      </div>`).join("");
+    listEl.querySelectorAll("button[data-lat]").forEach(mbtn => {
+      mbtn.addEventListener("click", () => {
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${pt.lat},${pt.lng}&destination=${mbtn.dataset.lat},${mbtn.dataset.lng}&travelmode=driving`;
+        window.open(url, "_blank");
+      });
+    });
+  }catch(e){
+    const friendly = e === "RO_NOT_SET" ? "Please set RO Office location first." : e;
+    msgEl.innerHTML = `<div class="msg error">${friendly}</div>`;
+  }
+  btn.disabled = false;
+  btn.innerHTML = "📡 Find Nearest Branches";
+});
+
+// ===================== GEO HELPERS =====================
+function haversine(lat1,lng1,lat2,lng2){
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLng = (lng2-lng1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function getCurrentPos(){
+  return new Promise((resolve,reject) => {
+    if(!navigator.geolocation){ reject("Geolocation not supported on this device/browser."); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({lat:pos.coords.latitude, lng:pos.coords.longitude}),
+      err => reject("Could not get your current location. Please allow location access and try again."),
+      {enableHighAccuracy:true, timeout:10000}
+    );
+  });
+}
+async function resolvePoint(mode, branchSelectEl){
+  if(mode === "ro"){
+    const ro = getRO();
+    if(!ro) throw "RO_NOT_SET";
+    return {lat:ro.lat, lng:ro.lng, label:"RO Office"};
+  }
+  if(mode === "current"){
+    const pos = await getCurrentPos();
+    return {lat:pos.lat, lng:pos.lng, label:"Current Location"};
+  }
+  const idx = parseInt(branchSelectEl.value);
+  const b = BRANCHES[idx];
+  return {lat:b.lat, lng:b.lng, label:b.n, d:b.d, branchIdx:idx};
+}
+
+// ===================== ROUTE OPTIMIZATION =====================
+function totalPathDistance(seq){
+  let total = 0;
+  for(let i=0;i<seq.length-1;i++) total += haversine(seq[i].lat,seq[i].lng,seq[i+1].lat,seq[i+1].lng) * roadFactor;
+  return total;
+}
+function nearestNeighbourOrder(start, points){
+  const remaining = points.slice();
+  const order = [];
+  let current = start;
+  while(remaining.length){
+    let bestIdx = 0, bestDist = Infinity;
+    remaining.forEach((p,idx) => { const d = haversine(current.lat,current.lng,p.lat,p.lng); if(d < bestDist){ bestDist = d; bestIdx = idx; } });
+    const next = remaining.splice(bestIdx,1)[0];
+    order.push(next); current = next;
+  }
+  return order;
+}
+function twoOptImprove(seq){
+  const n = seq.length;
+  if(n < 5) return seq;
+  let improved = true, best = seq.slice(), bestDist = totalPathDistance(best), iterations = 0;
+  while(improved && iterations < 60){
+    improved = false; iterations++;
+    for(let i=1;i<n-2;i++){
+      for(let j=i+1;j<n-1;j++){
+        const candidate = best.slice(0,i).concat(best.slice(i,j+1).reverse(), best.slice(j+1));
+        const d = totalPathDistance(candidate);
+        if(d < bestDist - 1e-6){ best = candidate; bestDist = d; improved = true; }
+      }
+    }
+  }
+  return best;
+}
+
+// ===================== SCHEDULE (ETA) =====================
+function computeSchedule(seq, startTimeStr, dwellMins, speedKmph){
+  const now = new Date();
+  let [hh,mm] = startTimeStr.split(":").map(Number);
+  let cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh||0, mm||0, 0);
+  const times = [new Date(cursor)];
+  const legKms = [0];
+  for(let i=1;i<seq.length;i++){
+    const km = haversine(seq[i-1].lat,seq[i-1].lng,seq[i].lat,seq[i].lng) * roadFactor;
+    const travelMins = (km/speedKmph)*60;
+    cursor = new Date(cursor.getTime() + travelMins*60000);
+    times.push(new Date(cursor));
+    legKms.push(km);
+    if(i < seq.length-1) cursor = new Date(cursor.getTime() + dwellMins*60000);
+  }
+  return { times, legKms };
+}
+function splitIntoDays(stops, startPt, endPt, startTimeStr, dwellMins, speedKmph, dayEndStr){
+  function dayBoundary(timeStr, refDate){
+    const [h,m] = timeStr.split(":").map(Number);
+    const d = new Date(refDate);
+    d.setHours(h||0, m||0, 0, 0);
+    return d;
+  }
+  const days = [];
+  let remaining = stops.slice();
+  let dayNum = 1;
+  while(remaining.length && dayNum <= 14){
+    const refDate = new Date();
+    const dayStart = dayBoundary(startTimeStr, refDate);
+    const dayEndLimit = dayBoundary(dayEndStr, refDate);
+    let cursor = new Date(dayStart);
+    let currentPos = startPt;
+    const dayStops = [];
+    while(remaining.length){
+      const candidate = remaining[0];
+      const km = haversine(currentPos.lat,currentPos.lng,candidate.lat,candidate.lng) * roadFactor;
+      const travelMins = (km/speedKmph)*60;
+      const arrival = new Date(cursor.getTime() + travelMins*60000);
+      if(arrival > dayEndLimit && dayStops.length > 0) break;
+      dayStops.push(candidate);
+      cursor = new Date(arrival.getTime() + dwellMins*60000);
+      currentPos = candidate;
+      remaining.shift();
+    }
+    const isLastDay = remaining.length === 0;
+    const dayEndPt = isLastDay ? endPt : startPt;
+    const fullDaySeq = [startPt, ...dayStops, dayEndPt];
+    const schedule = computeSchedule(fullDaySeq, startTimeStr, dwellMins, speedKmph);
+    days.push({ seq: fullDaySeq, times: schedule.times, legKms: schedule.legKms, dayNum });
+    dayNum++;
+  }
+  return days;
+}
+function fmtTime(d){ return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}); }
+function updateResultsNote(){
+  const pct = Math.round((roadFactor-1)*100);
+  const el = document.getElementById("resultsNote");
+  if(el) el.textContent = `Distances use a +${pct}% buffer over straight-line GPS (adjustable in Step 2) — it's an average estimate, not exact. On direct/wide roads the real distance can come out lower than this estimate; on winding or one-way-heavy stretches it can come out higher. Google Maps always has the accurate, live figure — use the button below for the real number. Very long routes may need splitting — Google Maps limits stops per request.`;
+}
+function fmtDuration(mins){
+  if(mins < 1) return "<1 min";
+  if(mins < 60) return Math.round(mins) + " min";
+  const h = Math.floor(mins/60), m = Math.round(mins%60);
+  return h + "h " + (m>0 ? m+"m" : "");
+}
+function vibeText(km){
+  if(km < 1) return "just a short hop away";
+  if(km < 3) return "fairly close by";
+  if(km < 7) return "a moderate distance";
+  if(km < 15) return "a decent stretch";
+  return "quite a long stretch — allow extra time";
+}
+function countUp(el, to, decimals, suffix, duration){
+  duration = duration || 700;
+  const startTime = performance.now();
+  function tick(now){
+    const progress = Math.min((now-startTime)/duration, 1);
+    const eased = 1 - Math.pow(1-progress, 3);
+    const val = to * eased;
+    el.textContent = val.toFixed(decimals) + (suffix||"");
+    if(progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ===================== PLAN ROUTE =====================
+const msgArea = document.getElementById("msgArea");
+function showMsg(text, type){ msgArea.innerHTML = `<div class="msg ${type}">${text}</div>`; }
+function clearMsg(){ msgArea.innerHTML = ""; }
+
+document.getElementById("planBtn").addEventListener("click", async () => {
+  clearMsg();
+  roadFactor = parseFloat(document.getElementById("roadBufferSelect").value) || 1.4;
+  let selected = [];
+  branchListEl.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    selected.push({...BRANCHES[idx], idx});
+  });
+
+  const planBtn = document.getElementById("planBtn");
+  planBtn.disabled = true;
+  planBtn.innerHTML = `<span class="spinner"></span>Locating &amp; calculating...`;
+
+  try{
+    let startPt, endPt;
+    try{
+      startPt = await resolvePoint(startMode, startBranchSelect);
+    }catch(e){
+      if(e === "RO_NOT_SET"){ showMsg("Please set RO Office location first, or switch start to Current Location.", "error"); resetPlanBtn(); return; }
+      throw e;
+    }
+    if(roundtrip){
+      endPt = {...startPt};
+    } else {
+      try{
+        endPt = await resolvePoint(endMode, endBranchSelect);
+      }catch(e){
+        if(e === "RO_NOT_SET"){ showMsg("Please set RO Office location first, or switch end to Current Location.", "error"); resetPlanBtn(); return; }
+        throw e;
+      }
+    }
+
+    // exclude branches already used as start/end anchors (no error if this empties the list —
+    // that simply means a direct point-to-point trip with no extra stops, which is valid)
+    selected = selected.filter(b => b.idx !== startPt.branchIdx && b.idx !== endPt.branchIdx);
+
+    if(selected.length === 0 && startPt.lat === endPt.lat && startPt.lng === endPt.lng){
+      showMsg("Start and end are the same point and no branch is selected. Please select at least one branch, or set a different end point.", "error");
+      resetPlanBtn(); return;
+    }
+
+    const nnOrder = nearestNeighbourOrder(startPt, selected);
+    let fullSeq = [startPt, ...nnOrder, endPt];
+    fullSeq = twoOptImprove(fullSeq);
+
+    const startTimeStr = document.getElementById("startTimeInput").value || "09:00";
+    const dwellMins = parseFloat(document.getElementById("dwellInput").value) || 0;
+    const speedKmph = parseFloat(document.getElementById("trafficSelect").value) || 22;
+    const schedule = computeSchedule(fullSeq, startTimeStr, dwellMins, speedKmph);
+
+    visitedSet = new Set();
+    tripCelebrated = false;
+    reorderMode = false;
+    document.getElementById("reorderToggleBtn").textContent = "🔀 Reorder Stops";
+
+    const splitEnabled = document.getElementById("splitDaysChk").checked;
+    const dayEndStr = document.getElementById("dayEndInput").value || "18:00";
+    const dayEndDate = (() => {
+      const [h,m] = dayEndStr.split(":").map(Number);
+      const d = new Date(schedule.times[0]);
+      d.setHours(h||18, m||0, 0, 0);
+      return d;
+    })();
+    const needsSplit = splitEnabled && nnOrder.length > 0 && schedule.times[schedule.times.length-1] > dayEndDate;
+
+    if(needsSplit){
+      const days = splitIntoDays(nnOrder, startPt, endPt, startTimeStr, dwellMins, speedKmph, dayEndStr);
+      lastRoute = { mode: "multiday", days, dwellMins, speedKmph, startTimeStr };
+    } else {
+      lastRoute = { mode: "single", seq: fullSeq, times: schedule.times, legKms: schedule.legKms, dwellMins, speedKmph, startTimeStr };
+    }
+
+    renderResults();
+    resetPlanBtn();
+    showStep(3);
+
+  }catch(err){
+    showMsg(typeof err === "string" ? err : "Something went wrong. Please try again.", "error");
+    resetPlanBtn();
+  }
+});
+function resetPlanBtn(){
+  const planBtn = document.getElementById("planBtn");
+  planBtn.disabled = false;
+  planBtn.innerHTML = "🚀 Plan My Route";
+}
+
+// ===================== RENDER RESULTS =====================
+function renderResults(){
+  if(lastRoute.mode === "multiday"){
+    renderMultiDayResults();
+  } else {
+    renderSingleDayResults();
+  }
+}
+
+function renderSingleDayResults(){
+  document.getElementById("progressBanner").style.display = "flex";
+  document.getElementById("viewToggle").style.display = "flex";
+  document.getElementById("storyView").style.display = "none";
+  document.getElementById("listView").style.display = "block";
+  document.querySelectorAll("#viewToggle button").forEach(b=>b.classList.remove("active"));
+  document.querySelector('#viewToggle button[data-val="list"]').classList.add("active");
+  document.getElementById("routeCanvas").style.display = "block";
+  document.getElementById("gmapsBtn").style.display = "flex";
+  const mdView = document.getElementById("multiDayView");
+  mdView.style.display = "none";
+  mdView.innerHTML = "";
+
+  const { seq, times } = lastRoute;
+  const total = totalPathDistance(seq);
+  const totalMins = (times[times.length-1] - times[0]) / 60000;
+
+  countUp(document.getElementById("totalKm"), total, 1, " km");
+  countUp(document.getElementById("stopCount"), seq.length-2, 0, "");
+  document.getElementById("totalTimeText").textContent =
+    `🕒 ${fmtTime(times[0])} → ${fmtTime(times[times.length-1])} (~${fmtDuration(totalMins)} incl. visits)`;
+  updateResultsNote();
+
+  renderTimeline();
+  renderStory();
+  animateRouteDraw(seq);
+  updateProgress();
+}
+
+function renderMultiDayResults(){
+  cancelLiveAnimation();
+  document.getElementById("progressBanner").style.display = "none";
+  document.getElementById("viewToggle").style.display = "none";
+  document.getElementById("listView").style.display = "none";
+  document.getElementById("storyView").style.display = "none";
+  document.getElementById("routeCanvas").style.display = "none";
+  document.getElementById("gmapsBtn").style.display = "none";
+  const mdView = document.getElementById("multiDayView");
+  mdView.style.display = "block";
+
+  const { days } = lastRoute;
+  let totalKm = 0, totalStops = 0;
+  days.forEach(d => { totalKm += totalPathDistance(d.seq); totalStops += d.seq.length-2; });
+
+  countUp(document.getElementById("totalKm"), totalKm, 1, " km");
+  document.getElementById("stopCount").textContent = totalStops;
+  document.getElementById("totalTimeText").textContent = `📅 Split across ${days.length} days · ${totalStops} branches total`;
+  updateResultsNote();
+
+  mdView.innerHTML = days.map((d,di) => {
+    const dayKm = totalPathDistance(d.seq);
+    const stopsHtml = d.seq.map((p,i) => {
+      const isStart = i===0, isEnd = i===d.seq.length-1;
+      const label = isStart ? "S" : (isEnd ? "E" : i);
+      const dotClass = isStart ? "start" : (isEnd ? "end" : "");
+      const name = p.label || p.n;
+      const meta = p.d ? `DPCD ${p.d}` : "";
+      return `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
+          <div class="tl-dot ${dotClass}" style="position:static;flex-shrink:0;">${label}</div>
+          <div style="flex:1;">
+            <div class="tl-name">${name}</div>
+            <div class="tl-meta">${meta}${i>0 ? ` · +${d.legKms[i].toFixed(1)} km` : ""} · ${i===0?"Departs":"ETA"} ${fmtTime(d.times[i])}</div>
+          </div>
+        </div>`;
+    }).join("");
+    return `
+      <div class="card" style="margin-bottom:14px;background:var(--surface-2);">
+        <div class="card-head"><span class="ic">📅</span><h2>Day ${d.dayNum}</h2></div>
+        <div class="card-sub">${d.seq.length-2} branches · ${dayKm.toFixed(1)} km · ${fmtTime(d.times[0])} → ${fmtTime(d.times[d.times.length-1])}</div>
+        ${stopsHtml}
+        <button class="btn btn-navy btn-wide" style="margin-top:14px;" data-day-maps="${di}">🧭 Open Day ${d.dayNum} in Google Maps</button>
+      </div>`;
+  }).join("");
+
+  mdView.querySelectorAll("button[data-day-maps]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const d = days[parseInt(btn.dataset.dayMaps)];
+      window.open(buildMapsUrl(d.seq), "_blank");
+    });
+  });
+}
+
+document.getElementById("reorderToggleBtn").addEventListener("click", () => {
+  reorderMode = !reorderMode;
+  document.getElementById("reorderToggleBtn").textContent = reorderMode ? "✅ Done Reordering" : "🔀 Reorder Stops";
+  document.getElementById("tlHint").textContent = reorderMode
+    ? "💡 Use ▲ ▼ to fine-tune the order, then tap 'Done Reordering'."
+    : "💡 Tap any circle to mark that stop as visited.";
+  renderTimeline();
+});
+
+function moveStop(idx, dir){
+  const seq = lastRoute.seq;
+  const targetIdx = idx + dir;
+  if(targetIdx < 1 || targetIdx > seq.length-2) return;
+  const tmp = seq[idx]; seq[idx] = seq[targetIdx]; seq[targetIdx] = tmp;
+
+  const schedule = computeSchedule(seq, lastRoute.startTimeStr, lastRoute.dwellMins, lastRoute.speedKmph);
+  lastRoute.times = schedule.times;
+  lastRoute.legKms = schedule.legKms;
+  visitedSet = new Set();
+  tripCelebrated = false;
+
+  const total = totalPathDistance(seq);
+  const totalMins = (lastRoute.times[lastRoute.times.length-1] - lastRoute.times[0]) / 60000;
+  countUp(document.getElementById("totalKm"), total, 1, " km");
+  document.getElementById("totalTimeText").textContent =
+    `🕒 ${fmtTime(lastRoute.times[0])} → ${fmtTime(lastRoute.times[lastRoute.times.length-1])} (~${fmtDuration(totalMins)} incl. visits)`;
+
+  renderTimeline();
+  renderStory();
+  drawCanvas(seq, 1);
+  updateProgress();
+}
+
+function renderTimeline(){
+  const { seq, times, legKms } = lastRoute;
+  const tl = document.getElementById("timeline");
+  tl.innerHTML = "";
+  const nextIdx = getNextStopIdx();
+
+  seq.forEach((p, i) => {
+    const isStart = i === 0, isEnd = i === seq.length - 1;
+    const isVisited = visitedSet.has(i);
+    const div = document.createElement("div");
+    div.className = "tl-item" + (isVisited ? " visited" : "");
+    div.style.animationDelay = (i*0.04) + "s";
+
+    let dotClass = isStart ? "start" : (isEnd ? "end" : "");
+    if(isVisited && !isStart && !isEnd) dotClass += " visited";
+    if(i === nextIdx && !reorderMode) dotClass += " next-glow";
+    const dotLabel = isStart ? "S" : (isEnd ? "E" : (isVisited ? "✓" : i));
+    const name = p.label || p.n;
+    const meta = p.d ? `DPCD ${p.d}${isStart ? " · Trip start" : (isEnd ? " · Trip end" : "")}` : (isStart ? "Trip start" : "Trip end");
+
+    const moveControls = (reorderMode && !isStart && !isEnd) ? `
+      <div style="position:absolute;right:0;top:0;display:flex;gap:5px;">
+        <button class="mini-btn" data-move="up" data-idx="${i}" ${i===1 ? "disabled" : ""}>▲</button>
+        <button class="mini-btn" data-move="down" data-idx="${i}" ${i===seq.length-2 ? "disabled" : ""}>▼</button>
+      </div>` : "";
+
+    div.innerHTML = `
+      ${moveControls}
+      <div class="tl-dot ${dotClass}" data-idx="${i}">${dotLabel}</div>
+      <div class="tl-name">${name}</div>
+      <div class="tl-meta">${meta}</div>
+      ${i>0 ? `<div class="tl-leg">+ ${legKms[i].toFixed(1)} km from previous stop</div>` : ""}
+      <div class="tl-eta">🕒 ${isStart ? "Departs" : "ETA"} ${fmtTime(times[i])}</div>
+    `;
+    tl.appendChild(div);
+  });
+
+  if(reorderMode){
+    tl.querySelectorAll("button[data-move]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        moveStop(parseInt(btn.dataset.idx), btn.dataset.move === "up" ? -1 : 1);
+      });
+    });
+  } else {
+    tl.querySelectorAll(".tl-dot").forEach(dot => {
+      dot.onclick = () => {
+        const idx = parseInt(dot.dataset.idx);
+        const { seq } = lastRoute;
+        if(idx === 0 || idx === seq.length - 1) return;
+        toggleVisited(idx);
+      };
+    });
+  }
+}
+
+function toggleVisited(idx){
+  if(visitedSet.has(idx)) visitedSet.delete(idx); else visitedSet.add(idx);
+  renderTimeline();
+  updateProgress();
+  drawCanvas(lastRoute.seq, 1);
+}
+
+function getNextStopIdx(){
+  const { seq } = lastRoute;
+  for(let i=1;i<seq.length-1;i++){ if(!visitedSet.has(i)) return i; }
+  return -1;
+}
+
+function celebrate(){
+  const container = document.getElementById("progressBanner");
+  for(let i=0;i<14;i++){
+    const span = document.createElement("span");
+    span.className = "confetti-piece";
+    span.textContent = ["🎉","✨","⭐","🏆"][i%4];
+    const angle = Math.random()*360, dist = 40+Math.random()*70;
+    span.style.setProperty("--dx", (Math.cos(angle*Math.PI/180)*dist)+"px");
+    span.style.setProperty("--dy", (Math.sin(angle*Math.PI/180)*dist)+"px");
+    span.style.left = "50%"; span.style.top = "50%";
+    container.appendChild(span);
+    setTimeout(() => span.remove(), 900);
+  }
+}
+
+function updateProgress(){
+  const { seq, legKms } = lastRoute;
+  const totalBranchStops = seq.length - 2;
+  const visitedCount = visitedSet.size;
+  const banner = document.getElementById("progressBanner");
+  const pct = totalBranchStops ? Math.round((visitedCount/totalBranchStops)*100) : 0;
+  document.getElementById("progressFill").style.width = pct + "%";
+
+  let lastVisitedIdx = 0;
+  visitedSet.forEach(i => { if(i > lastVisitedIdx) lastVisitedIdx = i; });
+  let covered = 0;
+  for(let i=1;i<=lastVisitedIdx;i++) covered += legKms[i];
+  const total = totalPathDistance(seq);
+  const remaining = Math.max(0, total - covered);
+
+  if(visitedCount === totalBranchStops && totalBranchStops > 0){
+    banner.classList.add("done");
+    document.getElementById("progressText").textContent = "🎉 All branches covered! Great work.";
+    if(!tripCelebrated){ celebrate(); tripCelebrated = true; }
+  }else{
+    banner.classList.remove("done");
+    document.getElementById("progressText").textContent = `${visitedCount} of ${totalBranchStops} visited · ${remaining.toFixed(1)} km left`;
+  }
+}
+document.getElementById("resetProgressBtn").addEventListener("click", () => {
+  visitedSet = new Set();
+  tripCelebrated = false;
+  renderTimeline();
+  updateProgress();
+  drawCanvas(lastRoute.seq, 1);
+});
+
+// ===================== STORY VIEW =====================
+function renderStory(){
+  const { seq, times, legKms } = lastRoute;
+  const storyEl = document.getElementById("storyView");
+  let html = "";
+  const startLabel = seq[0].label || seq[0].n;
+  const endLabel = seq[seq.length-1].label || seq[seq.length-1].n;
+  const stopsCount = seq.length - 2;
+
+  if(stopsCount === 0){
+    const km = legKms[1];
+    html += `<p>🏁 Direct trip: <b>${startLabel}</b> to <b>${endLabel}</b> — no stops in between. It's ${vibeText(km)}, about ${km.toFixed(1)} km / ${fmtDuration((km/lastRoute.speedKmph)*60)}. Starting at ${fmtTime(times[0])}, expected arrival around <b>${fmtTime(times[1])}</b>.</p>`;
+  } else {
+    html += `<p>🏁 Today's plan: start from <b>${startLabel}</b> around ${fmtTime(times[0])}. You have <b>${stopsCount}</b> branches to cover.</p>`;
+
+    for(let i=1;i<seq.length-1;i++){
+      const p = seq[i];
+      const km = legKms[i];
+      const ord = i<=10 ? ORDINALS[i-1] : `Stop ${i}`;
+      const lead = i===1 ? `${ord} stop:` : `${CONNECTORS[(i-2) % CONNECTORS.length]} the <b>${ord.toLowerCase()}</b> stop,`;
+      html += `<p>➡️ ${lead} <b>${p.n}</b> (DPCD ${p.d}) — ${vibeText(km)}, about ${km.toFixed(1)} km / ${fmtDuration((km/lastRoute.speedKmph)*60)} away. Expected arrival around <b>${fmtTime(times[i])}</b>.</p>`;
+    }
+
+    const lastLegKm = legKms[legKms.length-1];
+    html += `<p>🏁 Trip complete — arriving at <b>${endLabel}</b> (${lastLegKm.toFixed(1)} km). Estimated finish time: <b>${fmtTime(times[times.length-1])}</b>.</p>`;
+  }
+
+  html += `<p style="color:var(--muted);font-size:.78rem;">Total: ${totalPathDistance(seq).toFixed(1)} km, assuming ~${lastRoute.speedKmph} km/h traffic${stopsCount>0 ? ` plus ${lastRoute.dwellMins} min per branch visit` : ""}.</p>`;
+
+  storyEl.innerHTML = html;
+}
+
+// ===================== CANVAS MAP (stylish + live travel animation) =====================
+function buildProjector(seq, w, h){
+  const lats = seq.map(p=>p.lat), lngs = seq.map(p=>p.lng);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+  const pad = 30;
+  const spanLat = (maxLat-minLat) || 0.01;
+  const spanLng = (maxLng-minLng) || 0.01;
+  return function(p){
+    const x = pad + ((p.lng-minLng)/spanLng) * (w-2*pad);
+    const y = h-pad - ((p.lat-minLat)/spanLat) * (h-2*pad);
+    return [x,y];
+  };
+}
+function labelAt(ctx, x, y, text){
+  const ly = y < 18 ? y+15 : y-12;
+  ctx.font = "700 9px -apple-system,sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.lineWidth = 3; ctx.strokeStyle = "#fff";
+  ctx.strokeText(text, x, ly);
+  ctx.fillStyle = "#15202E";
+  ctx.fillText(text, x, ly);
+}
+function drawCanvas(seq, revealFraction){
+  revealFraction = revealFraction === undefined ? 1 : revealFraction;
+  const canvas = document.getElementById("routeCanvas");
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = 260;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+
+  const proj = buildProjector(seq, w, h);
+  const visibleCount = Math.max(1, Math.ceil(revealFraction * seq.length));
+  const visible = seq.slice(0, visibleCount);
+  const fullyRevealed = visibleCount === seq.length;
+  const sameStartEnd = seq.length > 1 && seq[0].lat === seq[seq.length-1].lat && seq[0].lng === seq[seq.length-1].lng;
+
+  // route line — soft shadow + rounded joins for a premium "road" feel
+  ctx.save();
+  ctx.shadowColor = "rgba(15,35,65,.18)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2;
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.strokeStyle = "#D6A53C";
+  ctx.lineWidth = 3;
+  visible.forEach((p,i) => { const [x,y] = proj(p); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+  ctx.stroke();
+  ctx.restore();
+
+  // markers
+  visible.forEach((p,i) => {
+    const [x,y] = proj(p);
+    const isStart = i===0;
+    const isEnd = i===seq.length-1 && fullyRevealed;
+    if(isStart && sameStartEnd && fullyRevealed) return; // drawn once specially below
+    if(isEnd && sameStartEnd) return;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(10,30,55,.30)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2;
+    ctx.beginPath();
+    ctx.arc(x,y, isStart||isEnd ? 7.5 : 6.5, 0, Math.PI*2);
+    ctx.fillStyle = isStart ? "#157A4F" : (isEnd ? "#C0392B" : (visitedSet.has(i) ? "#AEB7C4" : "#0A3D68"));
+    ctx.fill();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(x,y, isStart||isEnd ? 7.5 : 6.5, 0, Math.PI*2);
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.2; ctx.stroke();
+
+    if(!isStart && !isEnd){
+      ctx.fillStyle = "#fff"; ctx.font = "700 9px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(i, x, y);
+    } else if(isStart){
+      labelAt(ctx, x, y, "Start");
+    } else if(isEnd){
+      labelAt(ctx, x, y, "End");
+    }
+  });
+
+  // combined Start & End marker when the trip is a roundtrip back to the same point
+  if(sameStartEnd && fullyRevealed){
+    const [x,y] = proj(seq[0]);
+    const r = 8;
+    ctx.save();
+    ctx.shadowColor = "rgba(10,30,55,.30)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.arc(x,y,r,-Math.PI/2,Math.PI/2); ctx.closePath();
+    ctx.fillStyle = "#157A4F"; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.arc(x,y,r,Math.PI/2,Math.PI*1.5); ctx.closePath();
+    ctx.fillStyle = "#C0392B"; ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.2; ctx.stroke();
+    labelAt(ctx, x, y, "Start & End");
+  }
+}
+
+let liveAnimId = null;
+function isStep3Active(){
+  const el = document.querySelector('.step-screen[data-step="3"]');
+  return !!el && el.classList.contains("active") && el.offsetParent !== null;
+}
+function cancelLiveAnimation(){
+  if(liveAnimId){ cancelAnimationFrame(liveAnimId); liveAnimId = null; }
+}
+function drawTravelMarker(seq, lat, lng){
+  const canvas = document.getElementById("routeCanvas");
+  const ctx = canvas.getContext("2d");
+  const w = canvas.clientWidth, h = 260;
+  const proj = buildProjector(seq, w, h);
+  const [x,y] = proj({lat,lng});
+  ctx.save();
+  ctx.shadowColor = "rgba(214,165,60,.7)"; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.arc(x,y,5.5,0,Math.PI*2); ctx.fillStyle = "#fff"; ctx.fill();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(x,y,5.5,0,Math.PI*2); ctx.lineWidth = 2; ctx.strokeStyle = "#D6A53C"; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x,y,2.3,0,Math.PI*2); ctx.fillStyle = "#D6A53C"; ctx.fill();
+}
+function startLiveTravelAnimation(seq){
+  cancelLiveAnimation();
+  const segLens = [];
+  for(let i=0;i<seq.length-1;i++) segLens.push(haversine(seq[i].lat,seq[i].lng,seq[i+1].lat,seq[i+1].lng));
+  const total = segLens.reduce((a,b)=>a+b,0);
+  if(total <= 0) return;
+  const cum = [0];
+  segLens.forEach(l => cum.push(cum[cum.length-1]+l));
+  const duration = 6000;
+  const startTime = performance.now();
+  function frame(now){
+    if(!isStep3Active()){ liveAnimId = null; return; }
+    const elapsed = (now-startTime) % duration;
+    const dist = (elapsed/duration) * total;
+    let segIdx = 0;
+    while(segIdx < segLens.length-1 && cum[segIdx+1] < dist) segIdx++;
+    const segLen = segLens[segIdx] || 0.0001;
+    const segT = (dist - cum[segIdx]) / segLen;
+    const p0 = seq[segIdx], p1 = seq[segIdx+1];
+    const lat = p0.lat + (p1.lat-p0.lat)*segT;
+    const lng = p0.lng + (p1.lng-p0.lng)*segT;
+    drawCanvas(seq, 1);
+    drawTravelMarker(seq, lat, lng);
+    liveAnimId = requestAnimationFrame(frame);
+  }
+  liveAnimId = requestAnimationFrame(frame);
+}
+function animateRouteDraw(seq){
+  cancelLiveAnimation();
+  const duration = 900;
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min((now-start)/duration, 1);
+    drawCanvas(seq, t);
+    if(t < 1) requestAnimationFrame(frame);
+    else startLiveTravelAnimation(seq);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ===================== GOOGLE MAPS + WHATSAPP =====================
+function buildMapsUrl(seq){
+  const origin = `${seq[0].lat},${seq[0].lng}`;
+  const destination = `${seq[seq.length-1].lat},${seq[seq.length-1].lng}`;
+  const waypoints = seq.slice(1, seq.length-1).map(p => `${p.lat},${p.lng}`).join("|");
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+  if(waypoints) url += `&waypoints=${encodeURIComponent(waypoints)}`;
+  return url;
+}
+function buildPinUrl(p){
+  return `https://www.google.com/maps?q=${p.lat},${p.lng}`;
+}
+
+document.getElementById("gmapsBtn").addEventListener("click", () => {
+  if(!lastRoute) return;
+  window.open(buildMapsUrl(lastRoute.seq), "_blank");
+});
+
+document.getElementById("waBtn").addEventListener("click", () => {
+  if(!lastRoute) return;
+  let text = "";
+  if(lastRoute.mode === "multiday"){
+    text = `📍 *Branch Visit Plan (${lastRoute.days.length} days)*\n\n`;
+    lastRoute.days.forEach(d => {
+      text += `*Day ${d.dayNum}* (${d.seq[0].label||d.seq[0].n} → ${d.seq[d.seq.length-1].label||d.seq[d.seq.length-1].n})\n`;
+      for(let i=1;i<d.seq.length-1;i++){
+        text += `${i}. ${d.seq[i].n} (DPCD ${d.seq[i].d}) — ${d.legKms[i].toFixed(1)} km — ETA ${fmtTime(d.times[i])}\n📍 ${buildPinUrl(d.seq[i])}\n`;
+      }
+      text += `Day total: ${totalPathDistance(d.seq).toFixed(1)} km, finish ~${fmtTime(d.times[d.times.length-1])}\n🧭 Day ${d.dayNum} route: ${buildMapsUrl(d.seq)}\n\n`;
+    });
+  } else {
+    const { seq, times, legKms } = lastRoute;
+    text = `📍 *Branch Visit Plan*\nStart: ${seq[0].label||seq[0].n} at ${fmtTime(times[0])}\n📍 ${buildPinUrl(seq[0])}\n\n`;
+    for(let i=1;i<seq.length-1;i++){
+      text += `${i}. ${seq[i].n} (DPCD ${seq[i].d}) — ${legKms[i].toFixed(1)} km — ETA ${fmtTime(times[i])}\n📍 ${buildPinUrl(seq[i])}\n`;
+    }
+    text += `\nEnd: ${seq[seq.length-1].label||seq[seq.length-1].n} — ETA ${fmtTime(times[times.length-1])}\n📍 ${buildPinUrl(seq[seq.length-1])}\nTotal distance: ${totalPathDistance(seq).toFixed(1)} km\n\n🧭 Full route on Google Maps:\n${buildMapsUrl(seq)}`;
+  }
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+});
+
+// ===================== INITIAL BRANCH UI BUILD (after all selects/lists are declared above) =====================
+rebuildBranchUI();
+</script>
+</body>
+</html>
